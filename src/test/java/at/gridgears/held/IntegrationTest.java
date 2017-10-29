@@ -59,7 +59,7 @@ class IntegrationTest {
                 httpResponse.setEntity(new StringEntity(getSuccessLocationResponse(), contentType));
             });
 
-            held.findLocation("identifier", new LocationRequestCallback() {
+            held.findLocation("identifier", new FindLocationCallback() {
                 @Override
                 public void success(LocationResult locationResult) {
                     List<Location> locations = locationResult.getLocations();

@@ -30,7 +30,7 @@ class HeldClientTest {
     private CloseableHttpAsyncClient httpAsyncClient;
 
     @Mock
-    private LocationRequestCallback callBack;
+    private FindLocationCallback callBack;
 
     @Mock
     private ResponseParser responseParser;

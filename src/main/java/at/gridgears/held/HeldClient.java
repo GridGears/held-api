@@ -33,7 +33,7 @@ public class HeldClient implements Held {
     }
 
     @Override
-    public void findLocation(String identifier, LocationRequestCallback callback) {
+    public void findLocation(String identifier, FindLocationCallback callback) {
         HttpPost httpPost = new HttpPost(uri);
         httpPost.setHeader(new BasicHeader("Content-Type", "held+xml;charset=utf-8"));
 

@@ -1,5 +1,5 @@
 package at.gridgears.held;
 
 public interface Held {
-    void findLocation(String identifier, LocationRequestCallback callback);
+    void findLocation(String identifier, FindLocationCallback callback);
 }

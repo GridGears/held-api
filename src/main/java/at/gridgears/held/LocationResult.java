@@ -1,53 +1,50 @@
 package at.gridgears.held;
 
 import java.io.Serializable;
-import java.util.Optional;
+import java.util.*;
 
 public class LocationResult implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static final LocationResult ERROR_RESULT = new LocationResult(Status.ERROR, null);
-    private static final LocationResult NOT_FOUND_RESULT = new LocationResult(Status.NOT_FOUND, null);
+    private final List<Location> locations;
 
-    enum Status {
-        FOUND,
-        NOT_FOUND,
-        ERROR
+    public LocationResult(List<Location> locations) {
+        this.locations = Collections.unmodifiableList(new ArrayList<>(locations));
     }
 
-    private final Status status;
-    private final Location location;
-
-    private LocationResult(Status status, Location location) {
-        this.status = status;
-        this.location = location;
+    public List<Location> getLocations() {
+        return locations;
     }
 
-    public Optional<Location> getLocation() {
-        return Optional.ofNullable(location);
+    public boolean hasLocations() {
+        return !locations.isEmpty();
     }
 
-    public Status getStatus() {
-        return this.status;
+    public static LocationResult createFoundResult(List<Location> locations) {
+        return new LocationResult(locations);
     }
 
-    public static LocationResult createFoundResult(Location location) {
-        return new LocationResult(Status.FOUND, location);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        LocationResult that = (LocationResult) o;
+        return Objects.equals(locations, that.locations);
     }
 
-    public static LocationResult createNotFoundResult() {
-        return NOT_FOUND_RESULT;
-    }
-
-    public static LocationResult createErrorResult() {
-        return ERROR_RESULT;
+    @Override
+    public int hashCode() {
+        return Objects.hash(locations);
     }
 
     @Override
     public String toString() {
         return "LocationResult{" +
-                "status=" + status +
-                ", location=" + location +
+                "locations=" + locations +
                 '}';
     }
 }

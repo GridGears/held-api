@@ -7,13 +7,12 @@ public class HeldBuilder {
     private URI uri;
 
     public HeldBuilder withURI(URI uri) {
-
-
+        this.uri = uri;
         return this;
     }
 
 
     public Held build() {
-        return new HeldClient();
+        return new HeldClient(uri);
     }
 }

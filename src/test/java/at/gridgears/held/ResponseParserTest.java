@@ -92,7 +92,7 @@ class ResponseParserTest {
         private final String input;
         private final LocationResult expectedOutput;
 
-        public TestData(String description, String input, LocationResult expectedOutput) {
+        TestData(String description, String input, LocationResult expectedOutput) {
             this.description = description;
             this.input = input;
             this.expectedOutput = expectedOutput;

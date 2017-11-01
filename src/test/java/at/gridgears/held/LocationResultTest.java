@@ -29,7 +29,6 @@ class LocationResultTest {
 
     @Test
     void hasLocationReturnsFalseForErrorResult() {
-        Location location = mock(Location.class);
         assertThat("has locations", LocationResult.createFailureResult("identifier", new LocationResult.Status(LocationResult.StatusCode.LOCATION_UNKNOWN, "message")).hasLocations(), is(false));
     }
 }

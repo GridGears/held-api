@@ -26,7 +26,8 @@ class ResponseParserTest {
     @ParameterizedTest
     @MethodSource("testParsingData")
     void testParsing(TestParsingData testData) throws Exception {
-        assertThat("output", parser.parse(DEVICE_IDENTIFIER, testData.getInput()), is(testData.getExpectedOutput()));
+        LocationResult result = parser.parse(DEVICE_IDENTIFIER, testData.getInput());
+        assertThat("output", result, is(testData.getExpectedOutput()));
     }
 
     @ParameterizedTest

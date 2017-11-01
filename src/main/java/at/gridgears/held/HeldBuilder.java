@@ -9,6 +9,7 @@ public class HeldBuilder {
 
     private URI uri;
     private String language = "en";
+    private Authorization authorization = new NoAuthorization();
 
     public HeldBuilder withURI(String uri) {
         this.uri = URI.create(uri);
@@ -20,14 +21,22 @@ public class HeldBuilder {
         return this;
     }
 
+    public HeldBuilder withBasicAuthentication(String token) {
+        this.authorization = new BasicHeaderAuthorization(token);
+        return this;
+    }
+
 
     public Held build() {
-        HeldClientConfig config = new HeldClientConfig(uri);
         ResponseParser responseParser = new ResponseParser(language);
+
+        LocationRequestFactory locationRequestFactory = new LocationRequestFactory(authorization);
+
+        HeldClientConfig config = new HeldClientConfig(uri);
 
         CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
         httpclient.start();
 
-        return new HeldClient(config, httpclient, responseParser);
+        return new HeldClient(config, httpclient, responseParser, locationRequestFactory);
     }
 }

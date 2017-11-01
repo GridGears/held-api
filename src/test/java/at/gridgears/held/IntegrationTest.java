@@ -1,6 +1,8 @@
 package at.gridgears.held;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -27,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class IntegrationTest {
     private static final Logger LOG = LogManager.getLogger();
     private static final Duration TIMEOUT = Duration.ofSeconds(5L);
+    public static final String AUTHENTICATION_TOKEN = "authenticationToken";
     private static LocalTestServer server;
     private static Held held;
     private static String path = "/heldtest/";
@@ -43,7 +46,7 @@ class IntegrationTest {
     @BeforeAll
     static void setupHeld() {
         String uri = "http://127.0.0.1:" + server.getServicePort() + path;
-        held = new HeldBuilder().withURI(uri).build();
+        held = new HeldBuilder().withURI(uri).withBasicAuthentication(AUTHENTICATION_TOKEN).build();
     }
 
     @AfterAll
@@ -56,11 +59,8 @@ class IntegrationTest {
     void successfulRequest() throws InterruptedException {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
-            server.register(path, (httpRequest, httpResponse, httpContext) -> {
-                httpResponse.setStatusCode(HttpStatus.SC_OK);
-                ContentType contentType = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
-                httpResponse.setEntity(new StringEntity(getSuccessLocationResponse(), contentType));
-            });
+
+            prepareResponse(getSuccessLocationResponse());
 
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
@@ -83,16 +83,14 @@ class IntegrationTest {
         });
     }
 
+
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
     void recoverableErrorResponse() throws InterruptedException {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
-            server.register(path, (httpRequest, httpResponse, httpContext) -> {
-                httpResponse.setStatusCode(HttpStatus.SC_OK);
-                ContentType contentType = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
-                httpResponse.setEntity(new StringEntity(getNotFoundLocationResponse(), contentType));
-            });
+
+            prepareResponse(getNotFoundLocationResponse());
 
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
@@ -118,11 +116,8 @@ class IntegrationTest {
     void unRecoverableErrorResponse() throws InterruptedException {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
-            server.register(path, (httpRequest, httpResponse, httpContext) -> {
-                httpResponse.setStatusCode(HttpStatus.SC_OK);
-                ContentType contentType = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
-                httpResponse.setEntity(new StringEntity(getXmlErrorErrorResponse(), contentType));
-            });
+
+            prepareResponse(getXmlErrorErrorResponse());
 
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
@@ -139,6 +134,56 @@ class IntegrationTest {
 
             countDownLatch.await();
         });
+    }
+
+    @Test
+    @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
+    void httpErrorStatus() throws InterruptedException {
+        assertTimeoutPreemptively(TIMEOUT, () -> {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+
+            server.register(path, (httpRequest, httpResponse, httpContext) -> {
+                httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+            });
+
+            held.findLocation("identifier", new FindLocationCallback() {
+                @Override
+                public void success(LocationResult locationResult) {
+                    fail("Expected an exception");
+                }
+
+                @Override
+                public void failed(Exception e) {
+                    assertThat("exception message", e.getMessage(), is("HTTP error: 400: Bad Request"));
+                    countDownLatch.countDown();
+                }
+            });
+
+            countDownLatch.await();
+        });
+    }
+
+    private void prepareResponse(String responseContent) {
+        server.register(path, (httpRequest, httpResponse, httpContext) -> {
+            int statusCode = verifyRequest(httpRequest);
+            httpResponse.setStatusCode(statusCode);
+
+            if (statusCode == HttpStatus.SC_OK) {
+                ContentType contentType = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
+                httpResponse.setEntity(new StringEntity(responseContent, contentType));
+            }
+        });
+    }
+
+    private int verifyRequest(HttpRequest httpRequest) {
+        int result;
+        Header authorizationHeader = httpRequest.getFirstHeader("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.getValue().equals("Bearer " + AUTHENTICATION_TOKEN)) {
+            result = HttpStatus.SC_UNAUTHORIZED;
+        } else {
+            result = HttpStatus.SC_OK;
+        }
+        return result;
     }
 
     private String getSuccessLocationResponse() {
@@ -186,4 +231,6 @@ class IntegrationTest {
                 "           </message>\n" +
                 "         </error>";
     }
+
+
 }

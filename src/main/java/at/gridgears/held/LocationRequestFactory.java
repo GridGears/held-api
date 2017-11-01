@@ -1,6 +1,7 @@
 package at.gridgears.held;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.lang3.Validate;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -11,12 +12,18 @@ import java.net.URI;
 
 class LocationRequestFactory {
     private static final ContentType CONTENT_TYPE = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
+    private final Authorization authorization;
+
+    public LocationRequestFactory(Authorization authorization) {
+        Validate.notNull(authorization, "authorization mut not be null");
+        this.authorization = authorization;
+    }
 
     HttpPost createRequest(URI uri, String identifier) {
         HttpPost httpPost = new HttpPost(uri);
         httpPost.setHeader(new BasicHeader("Content-Type", "application/held+xml;charset=utf-8"));
         httpPost.setEntity(createEntity(identifier));
-
+        authorization.applyAuthorization(httpPost);
         return httpPost;
     }
 

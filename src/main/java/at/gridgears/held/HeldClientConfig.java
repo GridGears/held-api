@@ -8,7 +8,7 @@ class HeldClientConfig {
     private final URI uri;
 
     HeldClientConfig(URI uri) {
-        Validate.notNull(uri, "Uri must not  be null");
+        Validate.notNull(uri, "uri must not  be null");
         this.uri = uri;
     }
 

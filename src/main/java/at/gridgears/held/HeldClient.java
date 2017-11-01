@@ -3,6 +3,7 @@ package at.gridgears.held;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.execchain.RequestAbortedException;
@@ -14,22 +15,24 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URI;
 
-public class HeldClient implements Held {
+class HeldClient implements Held {
     private static final Logger LOG = LogManager.getLogger();
 
-    private final LocationRequestFactory locationRequestFactory = new LocationRequestFactory();
+    private final LocationRequestFactory locationRequestFactory;
     private final URI uri;
     private final CloseableHttpAsyncClient httpclient;
     private final ResponseParser responseParser;
 
-    public HeldClient(HeldClientConfig config, CloseableHttpAsyncClient httpclient, ResponseParser responseParser) {
-        Validate.notNull(config, "config must not  be null");
+    HeldClient(HeldClientConfig config, CloseableHttpAsyncClient httpclient, ResponseParser responseParser, LocationRequestFactory locationRequestFactory) {
+        Validate.notNull(config, "config must not be null");
         Validate.notNull(httpclient, "httpclient must not  be null");
         Validate.notNull(responseParser, "responseParser must not  be null");
+        Validate.notNull(locationRequestFactory, "locationRequestFactory must not  be null");
 
         this.uri = config.getUri();
         this.httpclient = httpclient;
         this.responseParser = responseParser;
+        this.locationRequestFactory = locationRequestFactory;
     }
 
     @Override
@@ -42,11 +45,16 @@ public class HeldClient implements Held {
             public void completed(HttpResponse response) {
                 LocationResult locationResult;
                 try {
-                    String heldResponse = EntityUtils.toString(response.getEntity());
-                    EntityUtils.consume(response.getEntity());
-                    LOG.debug("Received response for {}: {}", identifier, heldResponse);
-                    locationResult = responseParser.parse(identifier, heldResponse);
-                    callback.success(locationResult);
+                    int statusCode = response.getStatusLine().getStatusCode();
+                    if (statusCode == HttpStatus.SC_OK) {
+                        String heldResponse = EntityUtils.toString(response.getEntity());
+                        EntityUtils.consume(response.getEntity());
+                        LOG.debug("Received response for deviceIdentifier '{}': {}", identifier, heldResponse);
+                        locationResult = responseParser.parse(identifier, heldResponse);
+                        callback.success(locationResult);
+                    } else {
+                        callback.failed(new HeldException("HTTP error", statusCode + ": " + response.getStatusLine().getReasonPhrase()));
+                    }
                 } catch (ResponseParsingException e) {
                     LOG.warn("Could not parse response content", e);
                     callback.failed(e);

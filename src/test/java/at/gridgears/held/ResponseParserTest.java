@@ -1,6 +1,7 @@
 package at.gridgears.held;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -10,6 +11,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class ResponseParserTest {
@@ -37,6 +39,12 @@ class ResponseParserTest {
             assertThat("exception", e.getMessage(), is(testData.getExpectedException().getMessage()));
         }
 
+    }
+
+    @Test()
+    void parsingInvalidResponseThrowsException() {
+        assertThrows(ResponseParsingException.class,
+                () -> parser.parse(DEVICE_IDENTIFIER, "invalid input"));
     }
 
     static Stream<TestParsingData> testParsingData() {

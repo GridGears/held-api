@@ -1,6 +1,8 @@
 package at.gridgears.held;
 
-import at.gridgears.protocols.held.*;
+
+import at.gridgears.schemas.held.*;
+import org.apache.commons.lang3.Validate;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
 import javax.xml.bind.JAXBElement;
@@ -13,25 +15,36 @@ import java.util.List;
 import java.util.Optional;
 
 class ResponseParser {
-    private final Jaxb2Marshaller jaxb2Marshaller;
+    private static final String DEFAULT_LANGUAGE = "en";
 
-    ResponseParser() {
+    private final Jaxb2Marshaller jaxb2Marshaller;
+    private final String language;
+
+    ResponseParser(String language) {
+        this.language = language;
+        Validate.notEmpty(language, "language must not be null or empty");
         jaxb2Marshaller = new Jaxb2Marshaller();
         jaxb2Marshaller.setSupportJaxbElementClass(true);
         jaxb2Marshaller.setCheckForXmlRootElement(false);
-        jaxb2Marshaller.setClassesToBeBound(LocationResponseType.class, LocationTypeType.class);
+        jaxb2Marshaller.setClassesToBeBound(LocationResponseType.class, LocationTypeType.class, ErrorType.class);
     }
 
-    LocationResult parse(String responseContent) throws ResponseParsingException {
+    LocationResult parse(String identifier, String responseContent) throws ResponseParsingException, HeldException {
         Object unmarshalled = unmarshall(responseContent);
 
         Optional<LocationResponseType> locationResponseTypeOptional = getValue(unmarshalled, LocationResponseType.class);
         if (locationResponseTypeOptional.isPresent()) {
-            return getLocationResult(locationResponseTypeOptional.get());
+            return LocationResult.createFoundResult(identifier, parserLocationResult(locationResponseTypeOptional.get()));
         } else {
-            throw new ResponseParsingException("Could not parse HELD response: LocationResponse not found");
+            Optional<ErrorType> errorTypeOptional = getValue(unmarshalled, ErrorType.class);
+            if (errorTypeOptional.isPresent()) {
+                return LocationResult.createFailureResult(identifier, parseErrorResult(errorTypeOptional.get()));
+            } else {
+                throw new ResponseParsingException("Could not parse HELD response. Invalid content");
+            }
         }
     }
+
 
     private Object unmarshall(String responseContent) throws ResponseParsingException {
         Object unmarshalled;
@@ -43,16 +56,16 @@ class ResponseParser {
         return unmarshalled;
     }
 
-    private LocationResult getLocationResult(LocationResponseType locationResponseType) throws ResponseParsingException {
+    private List<Location> parserLocationResult(LocationResponseType locationResponseType) throws ResponseParsingException {
         try {
             List<Location> resultLocations = new LinkedList<>();
 
             Optional<Presence> presenceOptional = getValue(locationResponseType.getAny(), Presence.class);
             presenceOptional.ifPresent(presence -> {
-                List<Tuple> tuple = presence.getTuple();
-                if (!tuple.isEmpty()) {
-                    Tuple tuple1 = tuple.get(0);
-                    Status status = tuple1.getStatus();
+                List<Tuple> tuples = presence.getTuple();
+                if (!tuples.isEmpty()) {
+                    Tuple tuple = tuples.get(0);
+                    Status status = tuple.getStatus();
                     if (status != null) {
                         List<Object> statuses = status.getAny();
                         if (!statuses.isEmpty()) {
@@ -60,7 +73,7 @@ class ResponseParser {
                             geoprivOptional.ifPresent(geoPriv -> {
                                 LocInfoType locationInfo = geoPriv.getLocationInfo();
                                 if (locationInfo != null) {
-                                    Instant timestamp = getTimestamp(tuple1);
+                                    Instant timestamp = getTimestamp(tuple);
                                     resultLocations.addAll(parseLocations(locationInfo.getAny(), timestamp));
                                 }
                             });
@@ -68,10 +81,64 @@ class ResponseParser {
                     }
                 }
             });
-            return new LocationResult(resultLocations);
+            return resultLocations;
         } catch (Exception e) {
             throw new ResponseParsingException("Error parsing LocationResponseType", e);
         }
+    }
+
+
+    private LocationResult.Status parseErrorResult(ErrorType errorType) throws HeldException {
+        String message = getLocalizedMessage(errorType.getMessage());
+
+        LocationResult.Status result;
+        switch (errorType.getCode()) {
+            case "requestError":
+                throw new HeldException(errorType.getCode(), message);
+            case "xmlError":
+                throw new HeldException(errorType.getCode(), message);
+            case "generalLisError":
+                result = new LocationResult.Status(LocationResult.StatusCode.GENERAL_LIS_ERROR, message);
+                break;
+            case "locationUnknown":
+                result = new LocationResult.Status(LocationResult.StatusCode.LOCATION_UNKNOWN, message);
+                break;
+            case "unsupportedMessage":
+                throw new HeldException(errorType.getCode(), message);
+            case "timeout":
+                result = new LocationResult.Status(LocationResult.StatusCode.TIMEOUT, message);
+                break;
+            case "cannotProvideLiType":
+                result = new LocationResult.Status(LocationResult.StatusCode.CANNOT_PROVIDE_LI_TYPE, message);
+                break;
+            case "notLocatable":
+                result = new LocationResult.Status(LocationResult.StatusCode.NOT_LOCATABLE, message);
+                break;
+            default:
+                result = new LocationResult.Status(LocationResult.StatusCode.UNKNOWN_ERROR, message);
+                break;
+        }
+        return result;
+    }
+
+    private String getLocalizedMessage(List<ErrorMsgType> messages) {
+        String result = getMessageWithLanguage(messages, language);
+        if (result == null) {
+            result = getMessageWithLanguage(messages, DEFAULT_LANGUAGE);
+            if (result == null) {
+                result = !messages.isEmpty() ? messages.get(0).getValue() : "";
+            }
+        }
+
+        return result;
+    }
+
+    private String getMessageWithLanguage(List<ErrorMsgType> messages, String messageLanguage) {
+        return messages.stream().filter(msg -> isLang(msg, messageLanguage)).findFirst().map(ErrorMsgType::getValue).orElse(null);
+    }
+
+    private boolean isLang(ErrorMsgType msg, String messageLanguage) {
+        return msg.getOtherAttributes().entrySet().stream().anyMatch(entry -> entry.getKey().getLocalPart().equals("lang") && entry.getValue().equals(messageLanguage));
     }
 
     private Instant getTimestamp(Tuple tuple) {

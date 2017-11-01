@@ -10,24 +10,38 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class ResponseParserTest {
+    public static final String DEVICE_IDENTIFIER = "identifier";
     private static ResponseParser parser;
 
     @BeforeAll
     static void initParser() {
-        parser = new ResponseParser();
+        parser = new ResponseParser("en");
     }
 
     @ParameterizedTest
     @MethodSource("testParsingData")
-    void testParsing(TestData testData) throws Exception {
-        assertThat("output", parser.parse(testData.getInput()), is(testData.getExpectedOutput()));
+    void testParsing(TestParsingData testData) throws Exception {
+        assertThat("output", parser.parse(DEVICE_IDENTIFIER, testData.getInput()), is(testData.getExpectedOutput()));
     }
 
-    static Stream<TestData> testParsingData() {
+    @ParameterizedTest
+    @MethodSource("testParsingWithExceptionData")
+    void testParsingWithException(TestParsingWithExceptionData testData) throws ResponseParsingException {
+        try {
+            parser.parse(DEVICE_IDENTIFIER, testData.getInput());
+            fail("Expected exception: " + testData.getExpectedException());
+        } catch (HeldException e) {
+            assertThat("exception", e.getMessage(), is(testData.getExpectedException().getMessage()));
+        }
+
+    }
+
+    static Stream<TestParsingData> testParsingData() {
         return Stream.of(
-                new TestData("Point",
+                new TestParsingData("Point",
                         "<?xml version=\"1.0\"?>\n" +
                                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
                                 "     <presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\n" +
@@ -53,8 +67,8 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        new LocationResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))))),
-                new TestData("Circle",
+                        LocationResult.createFoundResult(DEVICE_IDENTIFIER, Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))))),
+                new TestParsingData("Circle",
                         "<?xml version=\"1.0\"?>\n" +
                                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
                                 "     <presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\n" +
@@ -83,16 +97,79 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        new LocationResult(Collections.singletonList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)))))
+                        LocationResult.createFoundResult(DEVICE_IDENTIFIER, Collections.singletonList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10))))),
+                new TestParsingData("LocationUnknown",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"locationUnknown\">\n" +
+                                "      <message xml:lang=\"en\">errorMessage</message>\n" +
+                                "</error>",
+                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.LOCATION_UNKNOWN, "errorMessage"))),
+                new TestParsingData("CannotProvideLiType",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"cannotProvideLiType\">\n" +
+                                "      <message xml:lang=\"de\">other language</message>\n" +
+                                "      <message xml:lang=\"en\">errorMessage</message>\n" +
+                                "</error>",
+                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.CANNOT_PROVIDE_LI_TYPE, "errorMessage"))),
+                new TestParsingData("GeneralLisError",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"generalLisError\">\n" +
+                                "      <message xml:lang=\"be\">other language</message>\n" +
+                                "      <message xml:lang=\"de\">even another language</message>\n" +
+                                "</error>",
+                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.GENERAL_LIS_ERROR, "other language"))),
+                new TestParsingData("Timeout",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"timeout\">\n" +
+                                "      <message xml:lang=\"en\">errorMessage</message>\n" +
+                                "</error>",
+                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.TIMEOUT, "errorMessage"))),
+                new TestParsingData("NotLocatable",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"notLocatable\">\n" +
+                                "      <message xml:lang=\"en\">errorMessage</message>\n" +
+                                "</error>",
+                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.NOT_LOCATABLE, "errorMessage"))),
+                new TestParsingData("UnknownError",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"unknownError\">\n" +
+                                "      <message xml:lang=\"en\">errorMessage</message>\n" +
+                                "</error>",
+                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.UNKNOWN_ERROR, "errorMessage")))
+
         );
     }
 
-    private static class TestData {
+    static Stream<TestParsingWithExceptionData> testParsingWithExceptionData() {
+        return Stream.of(
+                new TestParsingWithExceptionData("requestError",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"requestError\">\n" +
+                                "      <message xml:lang=\"en\">errorMessage</message>\n" +
+                                "</error>",
+                        new HeldException("requestError", "errorMessage")),
+                new TestParsingWithExceptionData("xmlError",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"xmlError\">\n" +
+                                "      <message xml:lang=\"de\">errorMessage</message>\n" +
+                                "</error>",
+                        new HeldException("xmlError", "errorMessage")),
+                new TestParsingWithExceptionData("unsupportedMessage",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"unsupportedMessage\">\n" +
+                                "      <message xml:lang=\"de\">other language</message>\n" +
+                                "      <message xml:lang=\"en\">errorMessage</message>\n" +
+                                "</error>",
+                        new HeldException("unsupportedMessage", "errorMessage")
+                ));
+    }
+
+    private static class TestParsingData {
         private final String description;
         private final String input;
         private final LocationResult expectedOutput;
 
-        TestData(String description, String input, LocationResult expectedOutput) {
+        TestParsingData(String description, String input, LocationResult expectedOutput) {
             this.description = description;
             this.input = input;
             this.expectedOutput = expectedOutput;
@@ -108,10 +185,39 @@ class ResponseParserTest {
 
         @Override
         public String toString() {
-            return "TestData{" +
+            return "TestParsingData{" +
                     "description='" + description + '\'' +
                     ", input='" + input + '\'' +
                     ", expectedOutput=" + expectedOutput +
+                    '}';
+        }
+    }
+
+    private static class TestParsingWithExceptionData {
+        private final String description;
+        private final String input;
+        private final Exception expectedException;
+
+        TestParsingWithExceptionData(String description, String input, Exception expectedException) {
+            this.description = description;
+            this.input = input;
+            this.expectedException = expectedException;
+        }
+
+        String getInput() {
+            return input;
+        }
+
+        Exception getExpectedException() {
+            return expectedException;
+        }
+
+        @Override
+        public String toString() {
+            return "TestParsingData{" +
+                    "description='" + description + '\'' +
+                    ", input='" + input + '\'' +
+                    ", expectedException=" + expectedException +
                     '}';
         }
     }

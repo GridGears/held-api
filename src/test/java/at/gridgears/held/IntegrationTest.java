@@ -17,10 +17,13 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.fail;
 
+@SuppressWarnings("PMD.TooManyStaticImports")
 class IntegrationTest {
     private static final Logger LOG = LogManager.getLogger();
     private static final Duration TIMEOUT = Duration.ofSeconds(5L);
@@ -50,8 +53,8 @@ class IntegrationTest {
 
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    void successHeldRequest() throws InterruptedException {
-        assertTimeout(TIMEOUT, () -> {
+    void successfulRequest() throws InterruptedException {
+        assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
             server.register(path, (httpRequest, httpResponse, httpContext) -> {
                 httpResponse.setStatusCode(HttpStatus.SC_OK);
@@ -62,7 +65,9 @@ class IntegrationTest {
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
                 public void success(LocationResult locationResult) {
+                    assertThat("status", locationResult.getStatus().getStatusCode(), is(LocationResult.StatusCode.LOCATION_FOUND));
                     List<Location> locations = locationResult.getLocations();
+                    assertThat("identifier", locationResult.getIdentifier(), is("identifier"));
                     assertThat("result size", locations, hasSize(1));
                     countDownLatch.countDown();
                 }
@@ -71,6 +76,64 @@ class IntegrationTest {
                 public void failed(Exception e) {
                     LOG.error("Error occurred", e);
                     fail("Exception occurred");
+                }
+            });
+
+            countDownLatch.await();
+        });
+    }
+
+    @Test
+    @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
+    void recoverableErrorResponse() throws InterruptedException {
+        assertTimeoutPreemptively(TIMEOUT, () -> {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            server.register(path, (httpRequest, httpResponse, httpContext) -> {
+                httpResponse.setStatusCode(HttpStatus.SC_OK);
+                ContentType contentType = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
+                httpResponse.setEntity(new StringEntity(getNotFoundLocationResponse(), contentType));
+            });
+
+            held.findLocation("identifier", new FindLocationCallback() {
+                @Override
+                public void success(LocationResult locationResult) {
+                    assertThat("status", locationResult.getStatus().getStatusCode(), is(LocationResult.StatusCode.LOCATION_UNKNOWN));
+                    assertThat("result size", locationResult.getLocations(), empty());
+                    countDownLatch.countDown();
+                }
+
+                @Override
+                public void failed(Exception e) {
+                    LOG.error("Error occurred", e);
+                    fail("Exception occurred");
+                }
+            });
+
+            countDownLatch.await();
+        });
+    }
+
+    @Test
+    @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
+    void unRecoverableErrorResponse() throws InterruptedException {
+        assertTimeoutPreemptively(TIMEOUT, () -> {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            server.register(path, (httpRequest, httpResponse, httpContext) -> {
+                httpResponse.setStatusCode(HttpStatus.SC_OK);
+                ContentType contentType = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
+                httpResponse.setEntity(new StringEntity(getXmlErrorErrorResponse(), contentType));
+            });
+
+            held.findLocation("identifier", new FindLocationCallback() {
+                @Override
+                public void success(LocationResult locationResult) {
+                    fail("Expected an exception");
+                }
+
+                @Override
+                public void failed(Exception e) {
+                    assertThat("exception message", e.getMessage(), is("xmlError: Invalid XML"));
+                    countDownLatch.countDown();
                 }
             });
 
@@ -104,5 +167,23 @@ class IntegrationTest {
                 "      </tuple>\n" +
                 "     </presence>\n" +
                 "    </locationResponse>";
+    }
+
+    private String getNotFoundLocationResponse() {
+        return "<?xml version=\"1.0\"?>\n" +
+                "         <error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\"\n" +
+                "            code=\"locationUnknown\">\n" +
+                "           <message xml:lang=\"en\">Unable to determine location\n" +
+                "           </message>\n" +
+                "         </error>";
+    }
+
+    private String getXmlErrorErrorResponse() {
+        return "<?xml version=\"1.0\"?>\n" +
+                "         <error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\"\n" +
+                "            code=\"xmlError\">\n" +
+                "           <message xml:lang=\"en\">Invalid XML\n" +
+                "           </message>\n" +
+                "         </error>";
     }
 }

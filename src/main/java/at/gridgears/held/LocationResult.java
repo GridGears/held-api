@@ -1,27 +1,57 @@
 package at.gridgears.held;
 
+import org.apache.commons.lang3.Validate;
+
 import java.io.Serializable;
 import java.util.*;
 
 public class LocationResult implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final List<Location> locations;
+    public enum StatusCode {
+        LOCATION_FOUND,
+        GENERAL_LIS_ERROR,
+        LOCATION_UNKNOWN,
+        TIMEOUT,
+        CANNOT_PROVIDE_LI_TYPE,
+        NOT_LOCATABLE,
+        UNKNOWN_ERROR
+    }
 
-    public LocationResult(List<Location> locations) {
+    private final String identifier;
+    private final List<Location> locations;
+    private final Status status;
+
+    private LocationResult(Status status, String identifier, List<Location> locations) {
+        this.status = status;
+        this.identifier = identifier;
         this.locations = Collections.unmodifiableList(new ArrayList<>(locations));
+    }
+
+    public String getIdentifier() {
+        return identifier;
     }
 
     public List<Location> getLocations() {
         return locations;
     }
 
-    public boolean hasLocations() {
-        return !locations.isEmpty();
+    public Status getStatus() {
+        return status;
     }
 
-    public static LocationResult createFoundResult(List<Location> locations) {
-        return new LocationResult(locations);
+    public boolean hasLocations() {
+        return status.getStatusCode() == StatusCode.LOCATION_FOUND;
+    }
+
+    public static LocationResult createFailureResult(String identifier, Status status) {
+        Validate.validState(status.getStatusCode() != StatusCode.LOCATION_FOUND, "Status must not be LOCATION_FOUND for an error result");
+        return new LocationResult(status, identifier, Collections.emptyList());
+    }
+
+    public static LocationResult createFoundResult(String identifier, List<Location> locations) {
+        Validate.notEmpty(locations, "locations must not be empty for a LOCATION_FOUND result");
+        return new LocationResult(new Status(StatusCode.LOCATION_FOUND, ""), identifier, locations);
     }
 
     @Override
@@ -33,18 +63,68 @@ public class LocationResult implements Serializable {
             return false;
         }
         LocationResult that = (LocationResult) o;
-        return Objects.equals(locations, that.locations);
+        return Objects.equals(identifier, that.identifier) &&
+                Objects.equals(locations, that.locations) &&
+                Objects.equals(status, that.status);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(locations);
+        return Objects.hash(identifier, locations, status);
     }
 
     @Override
     public String toString() {
         return "LocationResult{" +
-                "locations=" + locations +
+                "identifier='" + identifier + '\'' +
+                ", locations=" + locations +
+                ", status=" + status +
                 '}';
+    }
+
+    static class Status implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final StatusCode statusCode;
+        private final String message;
+
+        Status(StatusCode statusCode, String message) {
+            this.statusCode = statusCode;
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public StatusCode getStatusCode() {
+            return statusCode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Status status = (Status) o;
+            return statusCode == status.statusCode &&
+                    Objects.equals(message, status.message);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(statusCode, message);
+        }
+
+        @Override
+        public String toString() {
+            return "Status{" +
+                    "statusCode=" + statusCode +
+                    ", message=" + message +
+                    '}';
+        }
     }
 }

@@ -82,7 +82,7 @@ public class LocationResult implements Serializable {
                 '}';
     }
 
-    static class Status implements Serializable {
+    public static class Status implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private final StatusCode statusCode;

@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -144,8 +145,41 @@ class ResponseParserTest {
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"unknownError\">\n" +
                                 "      <message xml:lang=\"en\">errorMessage</message>\n" +
                                 "</error>",
-                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.UNKNOWN_ERROR, "errorMessage")))
-
+                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.UNKNOWN_ERROR, "errorMessage"))),
+                new TestParsingData("Multiple locations",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
+                                "     <presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\n" +
+                                "      entity=\"pres:3650n87934c@ls.example.com\">\n" +
+                                "      <tuple id=\"b650sf789nd\">\n" +
+                                "       <status>\n" +
+                                "        <geopriv xmlns=\"urn:ietf:params:xml:ns:pidf:geopriv10\">\n" +
+                                "         <location-info>\n" +
+                                "           <gs:Circle xmlns:gs=\"http://www.opengis.net/pidflo/1.0\"\n" +
+                                "               xmlns:gml=\"http://www.opengis.net/gml\"\n" +
+                                "               srsName=\"urn:ogc:def:crs:EPSG::4326\">\n" +
+                                "               <gml:pos>-34.407 150.88001</gml:pos>\n" +
+                                "               <gs:radius uom=\"urn:ogc:def:uom:EPSG::9001\">30\n" +
+                                "               </gs:radius>\n" +
+                                "           </gs:Circle>" +
+                                "          <Point xmlns=\"http://www.opengis.net/gml\"\n" +
+                                "           srsName=\"urn:ogc:def:crs:EPSG::4326\">\n" +
+                                "           <pos>-34.407 150.88001</pos>\n" +
+                                "          </Point>\n" +
+                                "         </location-info>\n" +
+                                "         <usage-rules\n" +
+                                "          xmlns:gbp=\"urn:ietf:params:xml:ns:pidf:geopriv10:basicPolicy\">\n" +
+                                "          <gbp:retention-expiry>2006-01-11T03:42:28+00:00\n" +
+                                "          </gbp:retention-expiry>\n" +
+                                "         </usage-rules>\n" +
+                                "         <method>Wiremap</method>\n" +
+                                "        </geopriv>\n" +
+                                "       </status>\n" +
+                                "       <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
+                                "      </tuple>\n" +
+                                "     </presence>\n" +
+                                "    </locationResponse>",
+                        LocationResult.createFoundResult(DEVICE_IDENTIFIER, Arrays.asList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)), new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10)))))
         );
     }
 

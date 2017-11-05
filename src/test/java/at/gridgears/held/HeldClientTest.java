@@ -1,5 +1,6 @@
 package at.gridgears.held;
 
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.ProtocolVersion;
@@ -7,6 +8,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.util.EntityUtils;
@@ -20,7 +22,9 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
@@ -49,6 +53,8 @@ class HeldClientTest {
 
     private HeldClient heldClient;
 
+    private List<Header> expectedHeaders = new ArrayList<>();
+
     @BeforeEach
     void initMocks() {
         MockitoAnnotations.initMocks(this);
@@ -56,11 +62,13 @@ class HeldClientTest {
 
     @BeforeEach
     void initClient() {
-        heldClient = new HeldClient(new HeldClientConfig(uri), httpAsyncClient, responseParser, new LocationRequestFactory(new NoAuthorization()));
+        expectedHeaders.add(new BasicHeader("CustomHeader", "CustomHeaderValue"));
+
+        heldClient = new HeldClient(new HeldClientConfig(uri), httpAsyncClient, responseParser, new LocationRequestFactory(expectedHeaders));
     }
 
     @Test
-    void whenHttpClientIsNotRunningThenItIsStartedOnrequest() {
+    void whenHttpClientIsNotRunningThenItIsStartedOnRequest() {
         when(httpAsyncClient.isRunning()).thenReturn(false);
         heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
 
@@ -102,6 +110,10 @@ class HeldClientTest {
 
         HttpPost httpPost = argumentCaptor.getValue();
         assertThat("Content-Type", httpPost.getFirstHeader("Content-Type").getValue(), is("application/held+xml;charset=utf-8"));
+
+        expectedHeaders.forEach(header -> {
+            assertThat(header.getName(), httpPost.getFirstHeader(header.getName()).getValue(), is(header.getValue()));
+        });
 
         String request = EntityUtils.toString(httpPost.getEntity());
         EntityUtils.consume(httpPost.getEntity());

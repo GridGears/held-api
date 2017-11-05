@@ -1,15 +1,20 @@
 package at.gridgears.held;
 
+import org.apache.commons.lang3.Validate;
+import org.apache.http.Header;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.message.BasicHeader;
 
 import java.net.URI;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HeldBuilder {
 
     private URI uri;
     private String language = "en";
-    private Authorization authorization = new NoAuthorization();
+    private final List<Header> requestHeaders = new LinkedList<>();
 
     public HeldBuilder withURI(String uri) {
         this.uri = URI.create(uri);
@@ -21,8 +26,9 @@ public class HeldBuilder {
         return this;
     }
 
-    public HeldBuilder withBasicAuthentication(String token) {
-        this.authorization = new BasicHeaderAuthorization(token);
+    public HeldBuilder withHeader(String name, String value) {
+        Validate.notNull(name, "name must not be null");
+        requestHeaders.add(new BasicHeader(name, value));
         return this;
     }
 
@@ -30,7 +36,7 @@ public class HeldBuilder {
     public Held build() {
         ResponseParser responseParser = new ResponseParser(language);
 
-        LocationRequestFactory locationRequestFactory = new LocationRequestFactory(authorization);
+        LocationRequestFactory locationRequestFactory = new LocationRequestFactory(requestHeaders);
 
         HeldClientConfig config = new HeldClientConfig(uri);
 

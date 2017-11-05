@@ -7,6 +7,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.localserver.LocalTestServer;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class IntegrationTest {
     private static final Logger LOG = LogManager.getLogger();
     private static final Duration TIMEOUT = Duration.ofSeconds(5L);
-    public static final String AUTHENTICATION_TOKEN = "authenticationToken";
+    private static final Header AUTHENTICATION_HEADER = new BasicHeader("authentication", "token");
     private static LocalTestServer server;
     private static Held held;
     private static String path = "/heldtest/";
@@ -46,7 +47,7 @@ class IntegrationTest {
     @BeforeAll
     static void setupHeld() {
         String uri = "http://127.0.0.1:" + server.getServicePort() + path;
-        held = new HeldBuilder().withURI(uri).withBasicAuthentication(AUTHENTICATION_TOKEN).build();
+        held = new HeldBuilder().withURI(uri).withHeader(AUTHENTICATION_HEADER.getName(), AUTHENTICATION_HEADER.getValue()).build();
     }
 
     @AfterAll
@@ -177,8 +178,8 @@ class IntegrationTest {
 
     private int verifyRequest(HttpRequest httpRequest) {
         int result;
-        Header authorizationHeader = httpRequest.getFirstHeader("Authorization");
-        if (authorizationHeader == null || !authorizationHeader.getValue().equals("Bearer " + AUTHENTICATION_TOKEN)) {
+        Header authorizationHeader = httpRequest.getFirstHeader(AUTHENTICATION_HEADER.getName());
+        if (authorizationHeader == null || !authorizationHeader.getValue().equals(AUTHENTICATION_HEADER.getValue())) {
             result = HttpStatus.SC_UNAUTHORIZED;
         } else {
             result = HttpStatus.SC_OK;

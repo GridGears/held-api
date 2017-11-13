@@ -18,7 +18,7 @@ class LocationRequestFactory {
     private final List<Header> headers;
 
     public LocationRequestFactory(List<Header> headers) {
-        Validate.notNull(headers, "authorization mut not be null");
+        Validate.noNullElements(headers, "headers must not be null or contain null elements");
         this.headers = new ArrayList<>(headers);
     }
 

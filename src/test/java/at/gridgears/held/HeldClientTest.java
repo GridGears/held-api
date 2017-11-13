@@ -136,7 +136,7 @@ class HeldClientTest {
 
         heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
 
-        verify(callBack).success(successLocationResult);
+        verify(callBack).completed(successLocationResult);
     }
 
     @Test
@@ -153,7 +153,7 @@ class HeldClientTest {
         heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
 
         ArgumentCaptor<HeldException> argumentCaptor = ArgumentCaptor.forClass(HeldException.class);
-        verify(callBack).failed(argumentCaptor.capture());
+        verify(callBack).failed(eq(DEVICE_IDENTIFIER), argumentCaptor.capture());
         assertThat("correct exception", argumentCaptor.getValue().getMessage(), is("HTTP error: 400: Bad Request"));
     }
 }

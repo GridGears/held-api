@@ -19,12 +19,16 @@ public class LocationResult implements Serializable {
     }
 
     private final String identifier;
-    private final List<Location> locations;
     private final Status status;
+    private final List<Location> locations;
 
-    private LocationResult(Status status, String identifier, List<Location> locations) {
-        this.status = status;
+    private LocationResult(String identifier, Status status, List<Location> locations) {
+        Validate.notNull(identifier, "identifier must not be null");
+        Validate.notNull(status, "status must not be null");
+        Validate.noNullElements(locations, "locations must not be null or contain null elements");
+
         this.identifier = identifier;
+        this.status = status;
         this.locations = Collections.unmodifiableList(new ArrayList<>(locations));
     }
 
@@ -45,13 +49,14 @@ public class LocationResult implements Serializable {
     }
 
     public static LocationResult createFailureResult(String identifier, Status status) {
+        Validate.notNull(status, "status must not be null");
         Validate.validState(status.getStatusCode() != StatusCode.LOCATION_FOUND, "Status must not be LOCATION_FOUND for an error result");
-        return new LocationResult(status, identifier, Collections.emptyList());
+        return new LocationResult(identifier, status, Collections.emptyList());
     }
 
     public static LocationResult createFoundResult(String identifier, List<Location> locations) {
         Validate.notEmpty(locations, "locations must not be empty for a LOCATION_FOUND result");
-        return new LocationResult(new Status(StatusCode.LOCATION_FOUND, ""), identifier, locations);
+        return new LocationResult(identifier, new Status(StatusCode.LOCATION_FOUND, ""), locations);
     }
 
     @Override
@@ -77,8 +82,8 @@ public class LocationResult implements Serializable {
     public String toString() {
         return "LocationResult{" +
                 "identifier='" + identifier + '\'' +
-                ", locations=" + locations +
                 ", status=" + status +
+                ", locations=" + locations +
                 '}';
     }
 

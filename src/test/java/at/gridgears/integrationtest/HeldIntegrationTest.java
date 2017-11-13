@@ -1,5 +1,6 @@
-package at.gridgears.held;
+package at.gridgears.integrationtest;
 
+import at.gridgears.held.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
@@ -20,14 +21,12 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @SuppressWarnings("PMD.TooManyStaticImports")
-class IntegrationTest {
+class HeldIntegrationTest {
     private static final Logger LOG = LogManager.getLogger();
     private static final Duration TIMEOUT = Duration.ofSeconds(5L);
     private static final Header AUTHENTICATION_HEADER = new BasicHeader("authentication", "token");
@@ -65,7 +64,7 @@ class IntegrationTest {
 
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
-                public void success(LocationResult locationResult) {
+                public void completed(LocationResult locationResult) {
                     assertThat("status", locationResult.getStatus().getStatusCode(), is(LocationResult.StatusCode.LOCATION_FOUND));
                     List<Location> locations = locationResult.getLocations();
                     assertThat("identifier", locationResult.getIdentifier(), is("identifier"));
@@ -74,7 +73,7 @@ class IntegrationTest {
                 }
 
                 @Override
-                public void failed(Exception e) {
+                public void failed(String identifier, Exception e) {
                     LOG.error("Error occurred", e);
                     fail("Exception occurred");
                 }
@@ -95,14 +94,14 @@ class IntegrationTest {
 
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
-                public void success(LocationResult locationResult) {
+                public void completed(LocationResult locationResult) {
                     assertThat("status", locationResult.getStatus().getStatusCode(), is(LocationResult.StatusCode.LOCATION_UNKNOWN));
                     assertThat("result size", locationResult.getLocations(), empty());
                     countDownLatch.countDown();
                 }
 
                 @Override
-                public void failed(Exception e) {
+                public void failed(String identifier, Exception e) {
                     LOG.error("Error occurred", e);
                     fail("Exception occurred");
                 }
@@ -122,12 +121,12 @@ class IntegrationTest {
 
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
-                public void success(LocationResult locationResult) {
+                public void completed(LocationResult locationResult) {
                     fail("Expected an exception");
                 }
 
                 @Override
-                public void failed(Exception e) {
+                public void failed(String identifier, Exception e) {
                     assertThat("exception message", e.getMessage(), is("xmlError: Invalid XML"));
                     countDownLatch.countDown();
                 }
@@ -149,12 +148,13 @@ class IntegrationTest {
 
             held.findLocation("identifier", new FindLocationCallback() {
                 @Override
-                public void success(LocationResult locationResult) {
+                public void completed(LocationResult locationResult) {
                     fail("Expected an exception");
                 }
 
                 @Override
-                public void failed(Exception e) {
+                public void failed(String identifier, Exception e) {
+                    assertThat("identifier", identifier, is("identifier"));
                     assertThat("exception message", e.getMessage(), is("HTTP error: 400: Bad Request"));
                     countDownLatch.countDown();
                 }

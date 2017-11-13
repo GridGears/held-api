@@ -21,8 +21,8 @@ class ResponseParser {
     private final String language;
 
     ResponseParser(String language) {
-        this.language = language;
         Validate.notEmpty(language, "language must not be null or empty");
+        this.language = language;
         jaxb2Marshaller = new Jaxb2Marshaller();
         jaxb2Marshaller.setSupportJaxbElementClass(true);
         jaxb2Marshaller.setCheckForXmlRootElement(false);
@@ -34,7 +34,7 @@ class ResponseParser {
 
         Optional<LocationResponseType> locationResponseTypeOptional = getValue(unmarshalled, LocationResponseType.class);
         if (locationResponseTypeOptional.isPresent()) {
-            return LocationResult.createFoundResult(identifier, parserLocationResult(locationResponseTypeOptional.get()));
+            return LocationResult.createFoundResult(identifier, parseLocationResult(locationResponseTypeOptional.get()));
         } else {
             Optional<ErrorType> errorTypeOptional = getValue(unmarshalled, ErrorType.class);
             if (errorTypeOptional.isPresent()) {
@@ -56,7 +56,7 @@ class ResponseParser {
         return unmarshalled;
     }
 
-    private List<Location> parserLocationResult(LocationResponseType locationResponseType) throws ResponseParsingException {
+    private List<Location> parseLocationResult(LocationResponseType locationResponseType) throws ResponseParsingException {
         try {
             List<Location> resultLocations = new LinkedList<>();
 

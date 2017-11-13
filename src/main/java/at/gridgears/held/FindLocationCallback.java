@@ -1,7 +1,7 @@
 package at.gridgears.held;
 
 public interface FindLocationCallback {
-    void success(LocationResult locationResult);
+    void completed(LocationResult locationResult);
 
-    void failed(Exception exception);
+    void failed(String identifier, Exception exception);
 }

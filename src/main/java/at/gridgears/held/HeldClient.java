@@ -37,6 +37,8 @@ class HeldClient implements Held {
 
     @Override
     public void findLocation(String identifier, FindLocationCallback callback) {
+        Validate.notNull(identifier, "identifier must not be null");
+        Validate.notNull(callback, "callback must not be null");
         HttpPost httpPost = locationRequestFactory.createRequest(uri, identifier);
 
         startHttpClientIfNecessary();
@@ -51,31 +53,31 @@ class HeldClient implements Held {
                         EntityUtils.consume(response.getEntity());
                         LOG.debug("Received response for deviceIdentifier '{}': {}", identifier, heldResponse);
                         locationResult = responseParser.parse(identifier, heldResponse);
-                        callback.success(locationResult);
+                        callback.completed(locationResult);
                     } else {
-                        callback.failed(new HeldException("HTTP error", statusCode + ": " + response.getStatusLine().getReasonPhrase()));
+                        callback.failed(identifier, new HeldException("HTTP error", statusCode + ": " + response.getStatusLine().getReasonPhrase()));
                     }
                 } catch (ResponseParsingException e) {
                     LOG.warn("Could not parse response content", e);
-                    callback.failed(e);
+                    callback.failed(identifier, e);
                 } catch (IOException e) {
                     LOG.warn("Could not extract response content", e);
-                    callback.failed(e);
+                    callback.failed(identifier, e);
                 } catch (HeldException e) {
                     LOG.warn("Received error response", e);
-                    callback.failed(e);
+                    callback.failed(identifier, e);
                 }
             }
 
             @Override
             public void failed(Exception e) {
                 LOG.warn("Error during HELD request", e);
-                callback.failed(e);
+                callback.failed(identifier, e);
             }
 
             @Override
             public void cancelled() {
-                callback.failed(new RequestAbortedException("Request cancelled"));
+                callback.failed(identifier, new RequestAbortedException("Request cancelled"));
             }
         });
     }

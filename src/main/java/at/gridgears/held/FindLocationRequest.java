@@ -1,8 +1,6 @@
 package at.gridgears.held;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.annotation.Nullable;
@@ -10,6 +8,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class FindLocationRequest implements Serializable {
@@ -67,29 +66,19 @@ public class FindLocationRequest implements Serializable {
         if (this == o) {
             return true;
         }
-
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        FindLocationRequest that = (FindLocationRequest) o;
-
-        return new EqualsBuilder()
-                .append(exact, that.exact)
-                .append(identifier, that.identifier)
-                .append(responseTime, that.responseTime)
-                .append(locationTypes, that.locationTypes)
-                .isEquals();
+        FindLocationRequest request = (FindLocationRequest) o;
+        return exact == request.exact &&
+                Objects.equals(identifier, request.identifier) &&
+                Objects.equals(responseTime, request.responseTime) &&
+                Objects.equals(locationTypes, request.locationTypes);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(identifier)
-                .append(responseTime)
-                .append(locationTypes)
-                .append(exact)
-                .toHashCode();
+        return Objects.hash(identifier, responseTime, locationTypes, exact);
     }
 
     @Override
@@ -125,7 +114,7 @@ public class FindLocationRequest implements Serializable {
             return new ResponseTime("emergencyDispatch");
         }
 
-        public String getResponseTime() {
+        String getResponseTime() {
             return responseTime;
         }
     }

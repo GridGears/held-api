@@ -1,11 +1,10 @@
 package at.gridgears.held;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class FindLocationError implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -33,25 +32,17 @@ public class FindLocationError implements Serializable {
         if (this == o) {
             return true;
         }
-
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         FindLocationError that = (FindLocationError) o;
-
-        return new EqualsBuilder()
-                .append(code, that.code)
-                .append(message, that.message)
-                .isEquals();
+        return Objects.equals(code, that.code) &&
+                Objects.equals(message, that.message);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(code)
-                .append(message)
-                .toHashCode();
+        return Objects.hash(code, message);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package at.gridgears.held;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -57,11 +59,11 @@ public class Location implements Serializable {
 
     @Override
     public String toString() {
-        return "Location{" +
-                "latitude=" + latitude +
-                ", longitude=" + longitude +
-                ", radius=" + radius +
-                ", timestamp=" + timestamp +
-                '}';
+        return new ToStringBuilder(this)
+                .append("latitude", latitude)
+                .append("longitude", longitude)
+                .append("radius", radius)
+                .append("timestamp", timestamp)
+                .toString();
     }
 }

@@ -1,16 +1,11 @@
 package at.gridgears.held;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.annotation.Nullable;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class FindLocationResult implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -63,38 +58,29 @@ public class FindLocationResult implements Serializable {
         return new FindLocationResult(locations, null);
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         FindLocationResult that = (FindLocationResult) o;
-
-        return new EqualsBuilder()
-                .append(error, that.error)
-                .append(locations, that.locations)
-                .isEquals();
+        return Objects.equals(error, that.error) &&
+                Objects.equals(locations, that.locations);
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-                .append(error)
-                .append(locations)
-                .toHashCode();
+        return Objects.hash(error, locations);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
+                .append("error", error)
                 .append("locations", locations)
-                .append("status", error)
                 .toString();
     }
 }

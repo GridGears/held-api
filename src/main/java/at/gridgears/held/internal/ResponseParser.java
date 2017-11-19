@@ -49,13 +49,11 @@ class ResponseParser {
 
 
     private Object unmarshall(String responseContent) throws ResponseParsingException {
-        Object unmarshalled;
         try {
-            unmarshalled = jaxb2Marshaller.unmarshal(new StreamSource(new StringReader(responseContent)));
+            return jaxb2Marshaller.unmarshal(new StreamSource(new StringReader(responseContent)));
         } catch (Exception e) {
             throw new ResponseParsingException("Could not unmarshall responseContent", e);
         }
-        return unmarshalled;
     }
 
     private List<Location> parseLocationResult(LocationResponseType locationResponseType) throws ResponseParsingException {
@@ -172,6 +170,7 @@ class ResponseParser {
         return new Location(Double.valueOf(coordinates.get(0)), Double.valueOf(coordinates.get(1)), circle.getRadius().getValue(), timestamp);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> Optional<T> getValue(Object element, Class<T> expectedClass) {
         T result = null;
         if (element instanceof JAXBElement) {

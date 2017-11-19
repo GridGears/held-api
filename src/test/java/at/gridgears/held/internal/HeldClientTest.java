@@ -101,6 +101,7 @@ class HeldClientTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void correctSuccessLocationResult() throws Exception {
         HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("http", 1, 1), HttpStatus.SC_OK, "SUCCESS"));
         response.setStatusCode(HttpStatus.SC_OK);
@@ -119,6 +120,7 @@ class HeldClientTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void correctHttpErrorStatusCodeResult() throws Exception {
         HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("http", 1, 1), HttpStatus.SC_BAD_REQUEST, "Bad Request"));
 

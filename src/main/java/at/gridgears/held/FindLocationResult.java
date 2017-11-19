@@ -1,11 +1,14 @@
 package at.gridgears.held;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.io.Serializable;
 import java.util.*;
 
-public class LocationResult implements Serializable {
+public class FindLocationResult implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum StatusCode {
@@ -18,22 +21,15 @@ public class LocationResult implements Serializable {
         UNKNOWN_ERROR
     }
 
-    private final String identifier;
     private final Status status;
     private final List<Location> locations;
 
-    private LocationResult(String identifier, Status status, List<Location> locations) {
-        Validate.notNull(identifier, "identifier must not be null");
+    private FindLocationResult(Status status, List<Location> locations) {
         Validate.notNull(status, "status must not be null");
         Validate.noNullElements(locations, "locations must not be null or contain null elements");
 
-        this.identifier = identifier;
         this.status = status;
         this.locations = Collections.unmodifiableList(new ArrayList<>(locations));
-    }
-
-    public String getIdentifier() {
-        return identifier;
     }
 
     public List<Location> getLocations() {
@@ -48,43 +44,50 @@ public class LocationResult implements Serializable {
         return status.getStatusCode() == StatusCode.LOCATION_FOUND;
     }
 
-    public static LocationResult createFailureResult(String identifier, Status status) {
+    public static FindLocationResult createFailureResult(Status status) {
         Validate.notNull(status, "status must not be null");
         Validate.validState(status.getStatusCode() != StatusCode.LOCATION_FOUND, "Status must not be LOCATION_FOUND for an error result");
-        return new LocationResult(identifier, status, Collections.emptyList());
+        return new FindLocationResult(status, Collections.emptyList());
     }
 
-    public static LocationResult createFoundResult(String identifier, List<Location> locations) {
+    public static FindLocationResult createFoundResult(List<Location> locations) {
         Validate.notEmpty(locations, "locations must not be empty for a LOCATION_FOUND result");
-        return new LocationResult(identifier, new Status(StatusCode.LOCATION_FOUND, ""), locations);
+        return new FindLocationResult(new Status(StatusCode.LOCATION_FOUND, ""), locations);
     }
+
 
     @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
+
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        LocationResult that = (LocationResult) o;
-        return Objects.equals(identifier, that.identifier) &&
-                Objects.equals(locations, that.locations) &&
-                Objects.equals(status, that.status);
+
+        FindLocationResult that = (FindLocationResult) o;
+
+        return new EqualsBuilder()
+                .append(status, that.status)
+                .append(locations, that.locations)
+                .isEquals();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identifier, locations, status);
+        return new HashCodeBuilder(17, 37)
+                .append(status)
+                .append(locations)
+                .toHashCode();
     }
 
     @Override
     public String toString() {
-        return "LocationResult{" +
-                "identifier='" + identifier + '\'' +
-                ", status=" + status +
-                ", locations=" + locations +
-                '}';
+        return new ToStringBuilder(this)
+                .append("status", status)
+                .append("locations", locations)
+                .toString();
     }
 
     public static class Status implements Serializable {
@@ -111,25 +114,33 @@ public class LocationResult implements Serializable {
             if (this == o) {
                 return true;
             }
+
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
+
             Status status = (Status) o;
-            return statusCode == status.statusCode &&
-                    Objects.equals(message, status.message);
+
+            return new EqualsBuilder()
+                    .append(statusCode, status.statusCode)
+                    .append(message, status.message)
+                    .isEquals();
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(statusCode, message);
+            return new HashCodeBuilder(17, 37)
+                    .append(statusCode)
+                    .append(message)
+                    .toHashCode();
         }
 
         @Override
         public String toString() {
-            return "Status{" +
-                    "statusCode=" + statusCode +
-                    ", message=" + message +
-                    '}';
+            return new ToStringBuilder(this)
+                    .append("statusCode", statusCode)
+                    .append("message", message)
+                    .toString();
         }
     }
 }

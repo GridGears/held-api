@@ -2,7 +2,7 @@ package at.gridgears.held.internal;
 
 
 import at.gridgears.held.Location;
-import at.gridgears.held.LocationResult;
+import at.gridgears.held.FindLocationResult;
 import at.gridgears.schemas.held.*;
 import org.apache.commons.lang3.Validate;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
@@ -31,16 +31,16 @@ class ResponseParser {
         jaxb2Marshaller.setClassesToBeBound(LocationResponseType.class, LocationTypeType.class, ErrorType.class);
     }
 
-    LocationResult parse(String identifier, String responseContent) throws ResponseParsingException, HeldException {
+    FindLocationResult parse(String responseContent) throws ResponseParsingException, HeldException {
         Object unmarshalled = unmarshall(responseContent);
 
         Optional<LocationResponseType> locationResponseTypeOptional = getValue(unmarshalled, LocationResponseType.class);
         if (locationResponseTypeOptional.isPresent()) {
-            return LocationResult.createFoundResult(identifier, parseLocationResult(locationResponseTypeOptional.get()));
+            return FindLocationResult.createFoundResult(parseLocationResult(locationResponseTypeOptional.get()));
         } else {
             Optional<ErrorType> errorTypeOptional = getValue(unmarshalled, ErrorType.class);
             if (errorTypeOptional.isPresent()) {
-                return LocationResult.createFailureResult(identifier, parseErrorResult(errorTypeOptional.get()));
+                return FindLocationResult.createFailureResult(parseErrorResult(errorTypeOptional.get()));
             } else {
                 throw new ResponseParsingException("Could not parse HELD response. Invalid content");
             }
@@ -90,34 +90,34 @@ class ResponseParser {
     }
 
 
-    private LocationResult.Status parseErrorResult(ErrorType errorType) throws HeldException {
+    private FindLocationResult.Status parseErrorResult(ErrorType errorType) throws HeldException {
         String message = getLocalizedMessage(errorType.getMessage());
 
-        LocationResult.Status result;
+        FindLocationResult.Status result;
         switch (errorType.getCode()) {
             case "requestError":
                 throw new HeldException(errorType.getCode(), message);
             case "xmlError":
                 throw new HeldException(errorType.getCode(), message);
             case "generalLisError":
-                result = new LocationResult.Status(LocationResult.StatusCode.GENERAL_LIS_ERROR, message);
+                result = new FindLocationResult.Status(FindLocationResult.StatusCode.GENERAL_LIS_ERROR, message);
                 break;
             case "locationUnknown":
-                result = new LocationResult.Status(LocationResult.StatusCode.LOCATION_UNKNOWN, message);
+                result = new FindLocationResult.Status(FindLocationResult.StatusCode.LOCATION_UNKNOWN, message);
                 break;
             case "unsupportedMessage":
                 throw new HeldException(errorType.getCode(), message);
             case "timeout":
-                result = new LocationResult.Status(LocationResult.StatusCode.TIMEOUT, message);
+                result = new FindLocationResult.Status(FindLocationResult.StatusCode.TIMEOUT, message);
                 break;
             case "cannotProvideLiType":
-                result = new LocationResult.Status(LocationResult.StatusCode.CANNOT_PROVIDE_LI_TYPE, message);
+                result = new FindLocationResult.Status(FindLocationResult.StatusCode.CANNOT_PROVIDE_LI_TYPE, message);
                 break;
             case "notLocatable":
-                result = new LocationResult.Status(LocationResult.StatusCode.NOT_LOCATABLE, message);
+                result = new FindLocationResult.Status(FindLocationResult.StatusCode.NOT_LOCATABLE, message);
                 break;
             default:
-                result = new LocationResult.Status(LocationResult.StatusCode.UNKNOWN_ERROR, message);
+                result = new FindLocationResult.Status(FindLocationResult.StatusCode.UNKNOWN_ERROR, message);
                 break;
         }
         return result;

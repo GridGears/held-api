@@ -1,7 +1,7 @@
 package at.gridgears.held.internal;
 
 import at.gridgears.held.Location;
-import at.gridgears.held.LocationResult;
+import at.gridgears.held.FindLocationResult;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class ResponseParserTest {
-    public static final String DEVICE_IDENTIFIER = "identifier";
     private static ResponseParser parser;
 
     @BeforeAll
@@ -29,7 +28,7 @@ class ResponseParserTest {
     @ParameterizedTest
     @MethodSource("testParsingData")
     void testParsing(TestParsingData testData) throws Exception {
-        LocationResult result = parser.parse(DEVICE_IDENTIFIER, testData.getInput());
+        FindLocationResult result = parser.parse(testData.getInput());
         assertThat("output", result, is(testData.getExpectedOutput()));
     }
 
@@ -37,7 +36,7 @@ class ResponseParserTest {
     @MethodSource("testParsingWithExceptionData")
     void testParsingWithException(TestParsingWithExceptionData testData) throws ResponseParsingException {
         try {
-            parser.parse(DEVICE_IDENTIFIER, testData.getInput());
+            parser.parse(testData.getInput());
             fail("Expected exception: " + testData.getExpectedException());
         } catch (HeldException e) {
             assertThat("exception", e.getMessage(), is(testData.getExpectedException().getMessage()));
@@ -48,7 +47,7 @@ class ResponseParserTest {
     @Test()
     void parsingInvalidResponseThrowsException() {
         assertThrows(ResponseParsingException.class,
-                () -> parser.parse(DEVICE_IDENTIFIER, "invalid input"));
+                () -> parser.parse("invalid input"));
     }
 
     static Stream<TestParsingData> testParsingData() {
@@ -79,7 +78,7 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        LocationResult.createFoundResult(DEVICE_IDENTIFIER, Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))))),
+                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))))),
                 new TestParsingData("Circle",
                         "<?xml version=\"1.0\"?>\n" +
                                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
@@ -109,45 +108,45 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        LocationResult.createFoundResult(DEVICE_IDENTIFIER, Collections.singletonList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10))))),
+                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10))))),
                 new TestParsingData("LocationUnknown",
                         "<?xml version=\"1.0\"?>\n" +
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"locationUnknown\">\n" +
                                 "      <message xml:lang=\"en\">errorMessage</message>\n" +
                                 "</error>",
-                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.LOCATION_UNKNOWN, "errorMessage"))),
+                        FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.LOCATION_UNKNOWN, "errorMessage"))),
                 new TestParsingData("CannotProvideLiType",
                         "<?xml version=\"1.0\"?>\n" +
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"cannotProvideLiType\">\n" +
                                 "      <message xml:lang=\"de\">other language</message>\n" +
                                 "      <message xml:lang=\"en\">errorMessage</message>\n" +
                                 "</error>",
-                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.CANNOT_PROVIDE_LI_TYPE, "errorMessage"))),
+                        FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.CANNOT_PROVIDE_LI_TYPE, "errorMessage"))),
                 new TestParsingData("GeneralLisError",
                         "<?xml version=\"1.0\"?>\n" +
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"generalLisError\">\n" +
                                 "      <message xml:lang=\"be\">other language</message>\n" +
                                 "      <message xml:lang=\"de\">even another language</message>\n" +
                                 "</error>",
-                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.GENERAL_LIS_ERROR, "other language"))),
+                        FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.GENERAL_LIS_ERROR, "other language"))),
                 new TestParsingData("Timeout",
                         "<?xml version=\"1.0\"?>\n" +
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"timeout\">\n" +
                                 "      <message xml:lang=\"en\">errorMessage</message>\n" +
                                 "</error>",
-                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.TIMEOUT, "errorMessage"))),
+                        FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.TIMEOUT, "errorMessage"))),
                 new TestParsingData("NotLocatable",
                         "<?xml version=\"1.0\"?>\n" +
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"notLocatable\">\n" +
                                 "      <message xml:lang=\"en\">errorMessage</message>\n" +
                                 "</error>",
-                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.NOT_LOCATABLE, "errorMessage"))),
+                        FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.NOT_LOCATABLE, "errorMessage"))),
                 new TestParsingData("UnknownError",
                         "<?xml version=\"1.0\"?>\n" +
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"unknownError\">\n" +
                                 "      <message xml:lang=\"en\">errorMessage</message>\n" +
                                 "</error>",
-                        LocationResult.createFailureResult(DEVICE_IDENTIFIER, new LocationResult.Status(LocationResult.StatusCode.UNKNOWN_ERROR, "errorMessage"))),
+                        FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.UNKNOWN_ERROR, "errorMessage"))),
                 new TestParsingData("Multiple locations",
                         "<?xml version=\"1.0\"?>\n" +
                                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
@@ -181,7 +180,7 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        LocationResult.createFoundResult(DEVICE_IDENTIFIER, Arrays.asList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)), new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10)))))
+                        FindLocationResult.createFoundResult(Arrays.asList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)), new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10)))))
         );
     }
 
@@ -212,9 +211,9 @@ class ResponseParserTest {
     private static class TestParsingData {
         private final String description;
         private final String input;
-        private final LocationResult expectedOutput;
+        private final FindLocationResult expectedOutput;
 
-        TestParsingData(String description, String input, LocationResult expectedOutput) {
+        TestParsingData(String description, String input, FindLocationResult expectedOutput) {
             this.description = description;
             this.input = input;
             this.expectedOutput = expectedOutput;
@@ -224,7 +223,7 @@ class ResponseParserTest {
             return input;
         }
 
-        LocationResult getExpectedOutput() {
+        FindLocationResult getExpectedOutput() {
             return expectedOutput;
         }
 

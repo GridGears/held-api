@@ -1,8 +1,9 @@
 package at.gridgears.held.internal;
 
 import at.gridgears.held.FindLocationCallback;
+import at.gridgears.held.FindLocationRequest;
 import at.gridgears.held.Location;
-import at.gridgears.held.LocationResult;
+import at.gridgears.held.FindLocationResult;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -52,7 +53,9 @@ class HeldClientTest {
 
     private URI uri = URI.create("http://gridgearstest/held");
 
-    private LocationResult successLocationResult = LocationResult.createFoundResult(DEVICE_IDENTIFIER, Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))));
+    private FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))));
+
+    private FindLocationRequest findLocationRequest = new FindLocationRequest(DEVICE_IDENTIFIER);
 
     private HeldClient heldClient;
 
@@ -73,7 +76,7 @@ class HeldClientTest {
     @Test
     void whenHttpClientIsNotRunningThenItIsStartedOnRequest() {
         when(httpAsyncClient.isRunning()).thenReturn(false);
-        heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
+        heldClient.findLocation(findLocationRequest, callBack);
 
         verify(httpAsyncClient, times(1)).start();
     }
@@ -81,7 +84,7 @@ class HeldClientTest {
     @Test
     void whenHttpClientIsRunningThenItIsNotStartedOnrequest() {
         when(httpAsyncClient.isRunning()).thenReturn(true);
-        heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
+        heldClient.findLocation(findLocationRequest, callBack);
 
         verify(httpAsyncClient, never()).start();
     }
@@ -99,14 +102,14 @@ class HeldClientTest {
         response.setStatusCode(HttpStatus.SC_OK);
         response.setEntity(new StringEntity("location"));
 
-        when(responseParser.parse(DEVICE_IDENTIFIER, "location")).thenReturn(successLocationResult);
+        when(responseParser.parse("location")).thenReturn(successFindLocationResult);
 
         when(httpAsyncClient.execute(eq(httpPost), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
             ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
             return new CompletableFuture<>();
         });
 
-        heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
+        heldClient.findLocation(findLocationRequest, callBack);
 
         ArgumentCaptor<HttpPost> argumentCaptor = ArgumentCaptor.forClass(HttpPost.class);
         verify(httpAsyncClient).execute(argumentCaptor.capture(), isA(FutureCallback.class));
@@ -130,33 +133,33 @@ class HeldClientTest {
         response.setStatusCode(HttpStatus.SC_OK);
         response.setEntity(new StringEntity("location"));
 
-        when(responseParser.parse(DEVICE_IDENTIFIER, "location")).thenReturn(successLocationResult);
+        when(responseParser.parse("location")).thenReturn(successFindLocationResult);
 
         when(httpAsyncClient.execute(isA(HttpPost.class), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
             ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
             return new CompletableFuture<>();
         });
 
-        heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
+        heldClient.findLocation(findLocationRequest, callBack);
 
-        verify(callBack).completed(successLocationResult);
+        verify(callBack).completed(findLocationRequest, successFindLocationResult);
     }
 
     @Test
     void correctHttpErrorStatusCodeResult() throws Exception {
         HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("http", 1, 1), HttpStatus.SC_BAD_REQUEST, "Bad Request"));
 
-        when(responseParser.parse(DEVICE_IDENTIFIER, "location")).thenReturn(successLocationResult);
+        when(responseParser.parse("location")).thenReturn(successFindLocationResult);
 
         when(httpAsyncClient.execute(isA(HttpPost.class), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
             ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
             return new CompletableFuture<>();
         });
 
-        heldClient.findLocation(DEVICE_IDENTIFIER, callBack);
+        heldClient.findLocation(findLocationRequest, callBack);
 
         ArgumentCaptor<HeldException> argumentCaptor = ArgumentCaptor.forClass(HeldException.class);
-        verify(callBack).failed(eq(DEVICE_IDENTIFIER), argumentCaptor.capture());
+        verify(callBack).failed(eq(findLocationRequest), argumentCaptor.capture());
         assertThat("correct exception", argumentCaptor.getValue().getMessage(), is("HTTP error: 400: Bad Request"));
     }
 }

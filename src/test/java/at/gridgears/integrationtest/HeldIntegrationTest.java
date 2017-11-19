@@ -62,18 +62,20 @@ class HeldIntegrationTest {
 
             prepareResponse(getSuccessLocationResponse());
 
-            held.findLocation("identifier", new FindLocationCallback() {
+            FindLocationRequest request = new FindLocationRequest("identifier");
+
+            held.findLocation(request, new FindLocationCallback() {
                 @Override
-                public void completed(LocationResult locationResult) {
-                    assertThat("status", locationResult.getStatus().getStatusCode(), is(LocationResult.StatusCode.LOCATION_FOUND));
-                    List<Location> locations = locationResult.getLocations();
-                    assertThat("identifier", locationResult.getIdentifier(), is("identifier"));
+                public void completed(FindLocationRequest request, FindLocationResult findLocationResult) {
+                    assertThat("status", findLocationResult.getStatus().getStatusCode(), is(FindLocationResult.StatusCode.LOCATION_FOUND));
+                    List<Location> locations = findLocationResult.getLocations();
+                    assertThat("identifier", request.getIdentifier(), is("identifier"));
                     assertThat("result size", locations, hasSize(1));
                     countDownLatch.countDown();
                 }
 
                 @Override
-                public void failed(String identifier, Exception e) {
+                public void failed(FindLocationRequest request, Exception e) {
                     LOG.error("Error occurred", e);
                     fail("Exception occurred");
                 }
@@ -92,16 +94,17 @@ class HeldIntegrationTest {
 
             prepareResponse(getNotFoundLocationResponse());
 
-            held.findLocation("identifier", new FindLocationCallback() {
+            FindLocationRequest request = new FindLocationRequest("identifier");
+            held.findLocation(request, new FindLocationCallback() {
                 @Override
-                public void completed(LocationResult locationResult) {
-                    assertThat("status", locationResult.getStatus().getStatusCode(), is(LocationResult.StatusCode.LOCATION_UNKNOWN));
-                    assertThat("result size", locationResult.getLocations(), empty());
+                public void completed(FindLocationRequest request, FindLocationResult findLocationResult) {
+                    assertThat("status", findLocationResult.getStatus().getStatusCode(), is(FindLocationResult.StatusCode.LOCATION_UNKNOWN));
+                    assertThat("result size", findLocationResult.getLocations(), empty());
                     countDownLatch.countDown();
                 }
 
                 @Override
-                public void failed(String identifier, Exception e) {
+                public void failed(FindLocationRequest request, Exception e) {
                     LOG.error("Error occurred", e);
                     fail("Exception occurred");
                 }
@@ -119,14 +122,15 @@ class HeldIntegrationTest {
 
             prepareResponse(getXmlErrorErrorResponse());
 
-            held.findLocation("identifier", new FindLocationCallback() {
+            FindLocationRequest request = new FindLocationRequest("identifier");
+            held.findLocation(request, new FindLocationCallback() {
                 @Override
-                public void completed(LocationResult locationResult) {
+                public void completed(FindLocationRequest request, FindLocationResult findLocationResult) {
                     fail("Expected an exception");
                 }
 
                 @Override
-                public void failed(String identifier, Exception e) {
+                public void failed(FindLocationRequest request, Exception e) {
                     assertThat("exception message", e.getMessage(), is("xmlError: Invalid XML"));
                     countDownLatch.countDown();
                 }
@@ -146,15 +150,16 @@ class HeldIntegrationTest {
                 httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
             });
 
-            held.findLocation("identifier", new FindLocationCallback() {
+            FindLocationRequest request = new FindLocationRequest("identifier");
+            held.findLocation(request, new FindLocationCallback() {
                 @Override
-                public void completed(LocationResult locationResult) {
+                public void completed(FindLocationRequest request, FindLocationResult findLocationResult) {
                     fail("Expected an exception");
                 }
 
                 @Override
-                public void failed(String identifier, Exception e) {
-                    assertThat("identifier", identifier, is("identifier"));
+                public void failed(FindLocationRequest request, Exception e) {
+                    assertThat("identifier", request.getIdentifier(), is("identifier"));
                     assertThat("exception message", e.getMessage(), is("HTTP error: 400: Bad Request"));
                     countDownLatch.countDown();
                 }

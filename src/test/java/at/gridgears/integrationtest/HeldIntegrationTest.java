@@ -67,7 +67,9 @@ class HeldIntegrationTest {
             held.findLocation(request, new FindLocationCallback() {
                 @Override
                 public void completed(FindLocationRequest request, FindLocationResult findLocationResult) {
-                    assertThat("status", findLocationResult.getStatus().getStatusCode(), is(FindLocationResult.StatusCode.LOCATION_FOUND));
+                    assertThat("status", findLocationResult.getStatus(), is(FindLocationResult.Status.FOUND));
+                    assertThat("error", findLocationResult.getError().isPresent(), is(false));
+                    assertThat("no error", findLocationResult.getError().isPresent(), is(false));
                     List<Location> locations = findLocationResult.getLocations();
                     assertThat("identifier", request.getIdentifier(), is("identifier"));
                     assertThat("result size", locations, hasSize(1));
@@ -88,7 +90,7 @@ class HeldIntegrationTest {
 
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    void recoverableErrorResponse() throws InterruptedException {
+    void notFoundResponse() throws InterruptedException {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -98,8 +100,9 @@ class HeldIntegrationTest {
             held.findLocation(request, new FindLocationCallback() {
                 @Override
                 public void completed(FindLocationRequest request, FindLocationResult findLocationResult) {
-                    assertThat("status", findLocationResult.getStatus().getStatusCode(), is(FindLocationResult.StatusCode.LOCATION_UNKNOWN));
-                    assertThat("result size", findLocationResult.getLocations(), empty());
+                    assertThat("status", findLocationResult.getStatus(), is(FindLocationResult.Status.NOT_FOUND));
+                    assertThat("error", findLocationResult.getError().get(), is(new FindLocationError("locationUnknown", "error message")));
+                    assertThat("no location results", findLocationResult.getLocations(), empty());
                     countDownLatch.countDown();
                 }
 
@@ -116,23 +119,26 @@ class HeldIntegrationTest {
 
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    void unRecoverableErrorResponse() throws InterruptedException {
+    void errorResponse() throws InterruptedException {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
-            prepareResponse(getXmlErrorErrorResponse());
+            prepareResponse(getUnsupportedMessageResponse());
 
             FindLocationRequest request = new FindLocationRequest("identifier");
             held.findLocation(request, new FindLocationCallback() {
                 @Override
                 public void completed(FindLocationRequest request, FindLocationResult findLocationResult) {
-                    fail("Expected an exception");
+                    assertThat("status", findLocationResult.getStatus(), is(FindLocationResult.Status.ERROR));
+                    assertThat("error", findLocationResult.getError().get(), is(new FindLocationError("unsupportedMessage", "error message")));
+                    assertThat("no location results", findLocationResult.getLocations(), empty());
+                    countDownLatch.countDown();
                 }
 
                 @Override
                 public void failed(FindLocationRequest request, Exception e) {
-                    assertThat("exception message", e.getMessage(), is("xmlError: Invalid XML"));
-                    countDownLatch.countDown();
+                    LOG.error("Error occurred", e);
+                    fail("Exception occurred");
                 }
             });
 
@@ -224,19 +230,17 @@ class HeldIntegrationTest {
         return "<?xml version=\"1.0\"?>\n" +
                 "         <error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\"\n" +
                 "            code=\"locationUnknown\">\n" +
-                "           <message xml:lang=\"en\">Unable to determine location\n" +
+                "           <message xml:lang=\"en\">error message\n" +
                 "           </message>\n" +
                 "         </error>";
     }
 
-    private String getXmlErrorErrorResponse() {
+    public String getUnsupportedMessageResponse() {
         return "<?xml version=\"1.0\"?>\n" +
                 "         <error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\"\n" +
-                "            code=\"xmlError\">\n" +
-                "           <message xml:lang=\"en\">Invalid XML\n" +
+                "            code=\"unsupportedMessage\">\n" +
+                "           <message xml:lang=\"en\">error message\n" +
                 "           </message>\n" +
                 "         </error>";
     }
-
-
 }

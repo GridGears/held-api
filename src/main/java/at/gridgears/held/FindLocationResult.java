@@ -5,30 +5,30 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public class FindLocationResult implements Serializable {
     private static final long serialVersionUID = 1L;
+    public static final String ERROR_LOCATION_UNKNOWN = "locationUnknown";
 
-    public enum StatusCode {
-        LOCATION_FOUND,
-        GENERAL_LIS_ERROR,
-        LOCATION_UNKNOWN,
-        TIMEOUT,
-        CANNOT_PROVIDE_LI_TYPE,
-        NOT_LOCATABLE,
-        UNKNOWN_ERROR
-    }
-
-    private final Status status;
+    private final FindLocationError error;
     private final List<Location> locations;
 
-    private FindLocationResult(Status status, List<Location> locations) {
-        Validate.notNull(status, "status must not be null");
+    public enum Status {
+        FOUND,
+        NOT_FOUND,
+        ERROR
+    }
+
+    private FindLocationResult(List<Location> locations, @Nullable FindLocationError error) {
         Validate.noNullElements(locations, "locations must not be null or contain null elements");
 
-        this.status = status;
+        this.error = error;
         this.locations = Collections.unmodifiableList(new ArrayList<>(locations));
     }
 
@@ -36,23 +36,31 @@ public class FindLocationResult implements Serializable {
         return locations;
     }
 
+    public Optional<FindLocationError> getError() {
+        return Optional.ofNullable(error);
+    }
+
     public Status getStatus() {
-        return status;
+        Status result;
+        if (!locations.isEmpty()) {
+            result = Status.FOUND;
+        } else if (error.getCode().equals(ERROR_LOCATION_UNKNOWN)) {
+            result = Status.NOT_FOUND;
+        } else {
+            result = Status.ERROR;
+        }
+
+        return result;
     }
 
-    public boolean hasLocations() {
-        return status.getStatusCode() == StatusCode.LOCATION_FOUND;
-    }
-
-    public static FindLocationResult createFailureResult(Status status) {
-        Validate.notNull(status, "status must not be null");
-        Validate.validState(status.getStatusCode() != StatusCode.LOCATION_FOUND, "Status must not be LOCATION_FOUND for an error result");
-        return new FindLocationResult(status, Collections.emptyList());
+    public static FindLocationResult createFailureResult(FindLocationError error) {
+        Validate.notNull(error, "error must not be null");
+        return new FindLocationResult(Collections.emptyList(), error);
     }
 
     public static FindLocationResult createFoundResult(List<Location> locations) {
-        Validate.notEmpty(locations, "locations must not be empty for a LOCATION_FOUND result");
-        return new FindLocationResult(new Status(StatusCode.LOCATION_FOUND, ""), locations);
+        Validate.notEmpty(locations, "locations must not be empty for a found result");
+        return new FindLocationResult(locations, null);
     }
 
 
@@ -69,7 +77,7 @@ public class FindLocationResult implements Serializable {
         FindLocationResult that = (FindLocationResult) o;
 
         return new EqualsBuilder()
-                .append(status, that.status)
+                .append(error, that.error)
                 .append(locations, that.locations)
                 .isEquals();
     }
@@ -77,7 +85,7 @@ public class FindLocationResult implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(status)
+                .append(error)
                 .append(locations)
                 .toHashCode();
     }
@@ -85,62 +93,8 @@ public class FindLocationResult implements Serializable {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("status", status)
                 .append("locations", locations)
+                .append("status", error)
                 .toString();
-    }
-
-    public static class Status implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        private final StatusCode statusCode;
-        private final String message;
-
-        public Status(StatusCode statusCode, String message) {
-            this.statusCode = statusCode;
-            this.message = message;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public StatusCode getStatusCode() {
-            return statusCode;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            Status status = (Status) o;
-
-            return new EqualsBuilder()
-                    .append(statusCode, status.statusCode)
-                    .append(message, status.message)
-                    .isEquals();
-        }
-
-        @Override
-        public int hashCode() {
-            return new HashCodeBuilder(17, 37)
-                    .append(statusCode)
-                    .append(message)
-                    .toHashCode();
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder(this)
-                    .append("statusCode", statusCode)
-                    .append("message", message)
-                    .toString();
-        }
     }
 }

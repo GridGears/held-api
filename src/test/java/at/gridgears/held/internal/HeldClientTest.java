@@ -4,6 +4,7 @@ import at.gridgears.held.FindLocationCallback;
 import at.gridgears.held.FindLocationRequest;
 import at.gridgears.held.FindLocationResult;
 import at.gridgears.held.Location;
+import at.gridgears.held.internal.parser.ResponseParser;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;

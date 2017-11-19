@@ -1,6 +1,6 @@
-package at.gridgears.held.internal;
+package at.gridgears.held.internal.parser;
 
-class ResponseParsingException extends Exception {
+public class ResponseParsingException extends Exception {
     ResponseParsingException(String message) {
         super(message);
     }

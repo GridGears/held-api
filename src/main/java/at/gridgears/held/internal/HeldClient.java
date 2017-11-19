@@ -3,8 +3,10 @@ package at.gridgears.held.internal;
 
 import at.gridgears.held.FindLocationCallback;
 import at.gridgears.held.FindLocationRequest;
-import at.gridgears.held.Held;
 import at.gridgears.held.FindLocationResult;
+import at.gridgears.held.Held;
+import at.gridgears.held.internal.parser.ResponseParser;
+import at.gridgears.held.internal.parser.ResponseParsingException;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -71,9 +73,6 @@ public class HeldClient implements Held {
                     callback.failed(request, e);
                 } catch (IOException e) {
                     LOG.warn("Could not extract response content", e);
-                    callback.failed(request, e);
-                } catch (HeldException e) {
-                    LOG.warn("Received error response", e);
                     callback.failed(request, e);
                 }
             }

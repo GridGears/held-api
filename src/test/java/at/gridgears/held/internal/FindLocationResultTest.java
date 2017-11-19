@@ -1,5 +1,6 @@
 package at.gridgears.held.internal;
 
+import at.gridgears.held.FindLocationError;
 import at.gridgears.held.Location;
 import at.gridgears.held.FindLocationResult;
 import org.junit.jupiter.api.Test;
@@ -14,23 +15,23 @@ import static org.mockito.Mockito.mock;
 class FindLocationResultTest {
 
     @Test
-    void creatingErrorResultWithLocationFoundStatusThrowsException() {
-        assertThrows(IllegalStateException.class, () -> FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.LOCATION_FOUND, "message")));
-    }
-
-    @Test
     void creatingFoundResultWithEmptyLocationsThrowsException() {
         assertThrows(IllegalArgumentException.class, () -> FindLocationResult.createFoundResult(Collections.emptyList()));
     }
 
     @Test
-    void hasLocationReturnsTrueForFoundResult() {
+    void statusIsFoundForLocationResult() {
         Location location = mock(Location.class);
-        assertThat("has locations", FindLocationResult.createFoundResult(Collections.singletonList(location)).hasLocations(), is(true));
+        assertThat("status", FindLocationResult.createFoundResult(Collections.singletonList(location)).getStatus(), is(FindLocationResult.Status.FOUND));
     }
 
     @Test
-    void hasLocationReturnsFalseForErrorResult() {
-        assertThat("has locations", FindLocationResult.createFailureResult(new FindLocationResult.Status(FindLocationResult.StatusCode.LOCATION_UNKNOWN, "message")).hasLocations(), is(false));
+    void statusIsNotFoundForLocationUnknownResult() {
+        assertThat("status", FindLocationResult.createFailureResult(new FindLocationError("locationUnknown", "message")).getStatus(), is(FindLocationResult.Status.NOT_FOUND));
+    }
+
+    @Test
+    void statusIsErrorForErrorResult() {
+        assertThat("status", FindLocationResult.createFailureResult(new FindLocationError("unsupportedMessage", "message")).getStatus(), is(FindLocationResult.Status.ERROR));
     }
 }

@@ -1,9 +1,9 @@
 package at.gridgears.held;
 
+import at.gridgears.held.internal.HeldClient;
+import at.gridgears.held.internal.HeldClientConfig;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.Header;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.message.BasicHeader;
 
 import javax.annotation.Nullable;
@@ -37,15 +37,7 @@ public class HeldBuilder {
 
 
     public Held build() {
-        ResponseParser responseParser = new ResponseParser(language);
-
-        LocationRequestFactory locationRequestFactory = new LocationRequestFactory(requestHeaders);
-
-        HeldClientConfig config = new HeldClientConfig(uri);
-
-        CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
-        httpclient.start();
-
-        return new HeldClient(config, httpclient, responseParser, locationRequestFactory);
+        HeldClientConfig config = new HeldClientConfig(uri, language, requestHeaders);
+        return new HeldClient(config);
     }
 }

@@ -1,6 +1,8 @@
-package at.gridgears.held;
+package at.gridgears.held.internal;
 
 
+import at.gridgears.held.Location;
+import at.gridgears.held.LocationResult;
 import at.gridgears.schemas.held.*;
 import org.apache.commons.lang3.Validate;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;

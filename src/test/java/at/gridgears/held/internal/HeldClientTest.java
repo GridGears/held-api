@@ -1,5 +1,8 @@
-package at.gridgears.held;
+package at.gridgears.held.internal;
 
+import at.gridgears.held.FindLocationCallback;
+import at.gridgears.held.Location;
+import at.gridgears.held.LocationResult;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -64,7 +67,7 @@ class HeldClientTest {
     void initClient() {
         expectedHeaders.add(new BasicHeader("CustomHeader", "CustomHeaderValue"));
 
-        heldClient = new HeldClient(new HeldClientConfig(uri), httpAsyncClient, responseParser, new LocationRequestFactory(expectedHeaders));
+        heldClient = new HeldClient(new HeldClientConfig(uri, "en", expectedHeaders), httpAsyncClient, responseParser, new LocationRequestFactory(expectedHeaders));
     }
 
     @Test

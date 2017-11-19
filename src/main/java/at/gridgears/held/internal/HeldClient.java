@@ -1,6 +1,9 @@
-package at.gridgears.held;
+package at.gridgears.held.internal;
 
 
+import at.gridgears.held.FindLocationCallback;
+import at.gridgears.held.Held;
+import at.gridgears.held.LocationResult;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -8,6 +11,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.execchain.RequestAbortedException;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,13 +19,17 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.URI;
 
-class HeldClient implements Held {
+public class HeldClient implements Held {
     private static final Logger LOG = LogManager.getLogger();
 
     private final LocationRequestFactory locationRequestFactory;
     private final URI uri;
     private final CloseableHttpAsyncClient httpclient;
     private final ResponseParser responseParser;
+
+    public HeldClient(HeldClientConfig config) {
+        this(config, HttpAsyncClients.createDefault(), new ResponseParser(config.getLanguage()), new LocationRequestFactory(config.getRequestHeaders()));
+    }
 
     HeldClient(HeldClientConfig config, CloseableHttpAsyncClient httpclient, ResponseParser responseParser, LocationRequestFactory locationRequestFactory) {
         Validate.notNull(config, "config must not be null");

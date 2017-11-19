@@ -1,5 +1,7 @@
-package at.gridgears.held;
+package at.gridgears.held.internal;
 
+import at.gridgears.held.Location;
+import at.gridgears.held.LocationResult;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

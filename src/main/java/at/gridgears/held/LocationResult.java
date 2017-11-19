@@ -93,7 +93,7 @@ public class LocationResult implements Serializable {
         private final StatusCode statusCode;
         private final String message;
 
-        Status(StatusCode statusCode, String message) {
+        public Status(StatusCode statusCode, String message) {
             this.statusCode = statusCode;
             this.message = message;
         }

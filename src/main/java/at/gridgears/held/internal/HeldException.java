@@ -1,4 +1,4 @@
-package at.gridgears.held;
+package at.gridgears.held.internal;
 
 public class HeldException extends Exception {
     HeldException(String errorType, String message) {

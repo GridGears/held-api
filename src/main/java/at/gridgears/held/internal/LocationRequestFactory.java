@@ -1,4 +1,4 @@
-package at.gridgears.held;
+package at.gridgears.held.internal;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.Validate;

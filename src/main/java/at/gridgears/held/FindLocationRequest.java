@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class FindLocationRequest implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -22,25 +23,25 @@ public class FindLocationRequest implements Serializable {
     }
 
     private final String identifier;
-    private final Duration responseTime;
+    private final String responseTime;
     private final List<LocationType> locationTypes;
     private final boolean exact;
 
     public FindLocationRequest(String identifier) {
-        this(identifier, null, Collections.emptyList(), false);
+        this(identifier, Collections.emptyList(), null, false);
     }
 
     public FindLocationRequest(String identifier, List<LocationType> locationTypes, boolean exact) {
-        this(identifier, null, locationTypes, exact);
+        this(identifier, locationTypes, null, exact);
     }
 
-    public FindLocationRequest(String identifier, @Nullable Duration responseTime, List<LocationType> locationTypes, boolean exact) {
+    public FindLocationRequest(String identifier, List<LocationType> locationTypes, @Nullable ResponseTime responseTime, boolean exact) {
         Validate.notEmpty(identifier, "identifier must not be null or empty");
         Validate.notNull(locationTypes, "locationTypes must not be null");
         Validate.noNullElements(locationTypes, "locationTypes must not contain null values");
 
         this.identifier = identifier;
-        this.responseTime = responseTime;
+        this.responseTime = responseTime != null ? responseTime.getResponseTime() : null;
         this.locationTypes = locationTypes;
         this.exact = exact;
     }
@@ -49,8 +50,8 @@ public class FindLocationRequest implements Serializable {
         return identifier;
     }
 
-    public Duration getResponseTime() {
-        return responseTime;
+    public Optional<String> getResponseTime() {
+        return Optional.ofNullable(responseTime);
     }
 
     public List<LocationType> getLocationTypes() {
@@ -99,5 +100,33 @@ public class FindLocationRequest implements Serializable {
                 .append("locationTypes", locationTypes)
                 .append("exact", exact)
                 .toString();
+    }
+
+    public static class ResponseTime {
+        private final String responseTime;
+
+        private ResponseTime(String responseTime) {
+            this.responseTime = responseTime;
+        }
+
+        public static ResponseTime createForDuration(Duration responseTime) {
+            Validate.notNull(responseTime, "responseTime must not be null");
+            if (responseTime.toMillis() < 0) {
+                throw new IllegalArgumentException("responseTime must not be negative");
+            }
+            return new ResponseTime(String.valueOf(responseTime.toMillis()));
+        }
+
+        public static ResponseTime createForEmergencyRouting() {
+            return new ResponseTime("emergencyRouting");
+        }
+
+        public static ResponseTime createForEmergencyDispatch() {
+            return new ResponseTime("emergencyDispatch");
+        }
+
+        public String getResponseTime() {
+            return responseTime;
+        }
     }
 }

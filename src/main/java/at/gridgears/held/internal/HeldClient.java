@@ -23,32 +23,32 @@ import java.net.URI;
 public class HeldClient implements Held {
     private static final Logger LOG = LogManager.getLogger();
 
-    private final LocationRequestFactory locationRequestFactory;
+    private final FindLocationRequestFactory findLocationRequestFactory;
     private final URI uri;
     private final CloseableHttpAsyncClient httpclient;
     private final ResponseParser responseParser;
 
     public HeldClient(HeldClientConfig config) {
-        this(config, HttpAsyncClients.createDefault(), new ResponseParser(config.getLanguage()), new LocationRequestFactory(config.getRequestHeaders()));
+        this(config, HttpAsyncClients.createDefault(), new ResponseParser(config.getLanguage()), new FindLocationRequestFactory(config.getRequestHeaders()));
     }
 
-    HeldClient(HeldClientConfig config, CloseableHttpAsyncClient httpclient, ResponseParser responseParser, LocationRequestFactory locationRequestFactory) {
+    HeldClient(HeldClientConfig config, CloseableHttpAsyncClient httpclient, ResponseParser responseParser, FindLocationRequestFactory findLocationRequestFactory) {
         Validate.notNull(config, "config must not be null");
         Validate.notNull(httpclient, "httpclient must not  be null");
         Validate.notNull(responseParser, "responseParser must not  be null");
-        Validate.notNull(locationRequestFactory, "locationRequestFactory must not  be null");
+        Validate.notNull(findLocationRequestFactory, "findLocationRequestFactory must not  be null");
 
         this.uri = config.getUri();
         this.httpclient = httpclient;
         this.responseParser = responseParser;
-        this.locationRequestFactory = locationRequestFactory;
+        this.findLocationRequestFactory = findLocationRequestFactory;
     }
 
     @Override
     public void findLocation(FindLocationRequest request, FindLocationCallback callback) {
         Validate.notNull(request, "request must not be null");
         Validate.notNull(callback, "callback must not be null");
-        HttpPost httpPost = locationRequestFactory.createRequest(uri, request);
+        HttpPost httpPost = findLocationRequestFactory.createRequest(uri, request);
 
         startHttpClientIfNecessary();
         httpclient.execute(httpPost, new FutureCallback<HttpResponse>() {

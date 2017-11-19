@@ -2,8 +2,8 @@ package at.gridgears.held.internal;
 
 import at.gridgears.held.FindLocationCallback;
 import at.gridgears.held.FindLocationRequest;
-import at.gridgears.held.Location;
 import at.gridgears.held.FindLocationResult;
+import at.gridgears.held.Location;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -15,7 +15,6 @@ import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
-import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -49,6 +48,9 @@ class HeldClientTest {
     private ResponseParser responseParser;
 
     @Mock
+    private FindLocationRequestFactory findLocationRequestFactory;
+
+    @Mock
     private HttpPost httpPost;
 
     private URI uri = URI.create("http://gridgearstest/held");
@@ -70,7 +72,9 @@ class HeldClientTest {
     void initClient() {
         expectedHeaders.add(new BasicHeader("CustomHeader", "CustomHeaderValue"));
 
-        heldClient = new HeldClient(new HeldClientConfig(uri, "en", expectedHeaders), httpAsyncClient, responseParser, new LocationRequestFactory(expectedHeaders));
+        when(findLocationRequestFactory.createRequest(uri, findLocationRequest)).thenReturn(httpPost);
+
+        heldClient = new HeldClient(new HeldClientConfig(uri, "en", expectedHeaders), httpAsyncClient, responseParser, findLocationRequestFactory);
     }
 
     @Test
@@ -97,37 +101,6 @@ class HeldClientTest {
     }
 
     @Test
-    void correctGeodeticRequest() throws Exception {
-        HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("http", 1, 1), HttpStatus.SC_OK, "SUCCESS"));
-        response.setStatusCode(HttpStatus.SC_OK);
-        response.setEntity(new StringEntity("location"));
-
-        when(responseParser.parse("location")).thenReturn(successFindLocationResult);
-
-        when(httpAsyncClient.execute(eq(httpPost), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
-            ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
-            return new CompletableFuture<>();
-        });
-
-        heldClient.findLocation(findLocationRequest, callBack);
-
-        ArgumentCaptor<HttpPost> argumentCaptor = ArgumentCaptor.forClass(HttpPost.class);
-        verify(httpAsyncClient).execute(argumentCaptor.capture(), isA(FutureCallback.class));
-
-        HttpPost httpPost = argumentCaptor.getValue();
-        assertThat("Content-Type", httpPost.getFirstHeader("Content-Type").getValue(), is("application/held+xml;charset=utf-8"));
-
-        expectedHeaders.forEach(header -> {
-            assertThat(header.getName(), httpPost.getFirstHeader(header.getName()).getValue(), is(header.getValue()));
-        });
-
-        String request = EntityUtils.toString(httpPost.getEntity());
-        EntityUtils.consume(httpPost.getEntity());
-
-        assertThat("request", request, is("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<locationRequest xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" xmlns:ns2=\"urn:ietf:params:xml:ns:geopriv:held:id\">\n   <locationType exact=\"true\">geodetic</locationType>   <ns2:device>\n        <ns2:uri>+43123456789</ns2:uri>\n    </ns2:device>\n</locationRequest>"));
-    }
-
-    @Test
     void correctSuccessLocationResult() throws Exception {
         HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("http", 1, 1), HttpStatus.SC_OK, "SUCCESS"));
         response.setStatusCode(HttpStatus.SC_OK);
@@ -135,7 +108,7 @@ class HeldClientTest {
 
         when(responseParser.parse("location")).thenReturn(successFindLocationResult);
 
-        when(httpAsyncClient.execute(isA(HttpPost.class), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
+        when(httpAsyncClient.execute(eq(httpPost), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
             ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
             return new CompletableFuture<>();
         });
@@ -151,7 +124,7 @@ class HeldClientTest {
 
         when(responseParser.parse("location")).thenReturn(successFindLocationResult);
 
-        when(httpAsyncClient.execute(isA(HttpPost.class), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
+        when(httpAsyncClient.execute(eq(httpPost), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
             ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
             return new CompletableFuture<>();
         });

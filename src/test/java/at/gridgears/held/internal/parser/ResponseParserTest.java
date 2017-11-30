@@ -3,11 +3,13 @@ package at.gridgears.held.internal.parser;
 import at.gridgears.held.FindLocationError;
 import at.gridgears.held.FindLocationResult;
 import at.gridgears.held.Location;
+import at.gridgears.held.LocationReference;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,7 +68,7 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))))),
+                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))), Collections.emptyList())),
                 new TestParsingData("Circle",
                         "<?xml version=\"1.0\"?>\n" +
                                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
@@ -96,7 +98,7 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10))))),
+                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10))), Collections.emptyList())),
                 new TestParsingData("ErrorResponse",
                         "<?xml version=\"1.0\"?>\n" +
                                 "<error xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" code=\"locationUnknown\">\n" +
@@ -125,6 +127,19 @@ class ResponseParserTest {
                                 "      <message xml:lang=\"fr\">even another language</message>\n" +
                                 "</error>",
                         FindLocationResult.createFailureResult(new FindLocationError("locationUnknown", "other language"))),
+                new TestParsingData("Reference",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
+                                "      <locationUriSet expires=\"2006-01-01T13:00:00.0Z\">\n" +
+                                "       <locationURI>https://ls.example.com:9768/357yc6s64ceyoiuy5ax3o\n" +
+                                "       </locationURI>\n" +
+                                "       <locationURI>sip:9769+357yc6s64ceyoiuy5ax3o@ls.example.com</locationURI>\n" +
+                                "     </locationUriSet>\n" +
+                                "   </locationResponse>",
+                        FindLocationResult.createFoundResult(Collections.emptyList(), Arrays.asList(
+                                new LocationReference(URI.create("https://ls.example.com:9768/357yc6s64ceyoiuy5ax3o"), Instant.parse("2006-01-01T13:00:00.0Z")),
+                                new LocationReference(URI.create("sip:9769+357yc6s64ceyoiuy5ax3o@ls.example.com"), Instant.parse("2006-01-01T13:00:00.0Z"))
+                        ))),
                 new TestParsingData("Multiple locations",
                         "<?xml version=\"1.0\"?>\n" +
                                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
@@ -158,7 +173,7 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        FindLocationResult.createFoundResult(Arrays.asList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)), new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10)))))
+                        FindLocationResult.createFoundResult(Arrays.asList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)), new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))), Collections.emptyList()))
         );
     }
 

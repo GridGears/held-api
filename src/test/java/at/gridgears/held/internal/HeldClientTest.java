@@ -56,7 +56,7 @@ class HeldClientTest {
 
     private URI uri = URI.create("http://gridgearstest/held");
 
-    private FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))));
+    private FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))),Collections.emptyList());
 
     private FindLocationRequest findLocationRequest = new FindLocationRequest(DEVICE_IDENTIFIER);
 

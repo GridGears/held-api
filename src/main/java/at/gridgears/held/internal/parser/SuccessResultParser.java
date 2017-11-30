@@ -1,18 +1,28 @@
 package at.gridgears.held.internal.parser;
 
 import at.gridgears.held.Location;
+import at.gridgears.held.LocationReference;
 import at.gridgears.schemas.held.*;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.xml.datatype.XMLGregorianCalendar;
+import java.net.URI;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
 class SuccessResultParser {
-    List<Location> parse(LocationResponseType locationResponseType) throws ResponseParsingException {
+    Pair<List<Location>, List<LocationReference>> parse(LocationResponseType locationResponseType) throws ResponseParsingException {
         try {
             List<Location> resultLocations = new LinkedList<>();
+            List<LocationReference> resultReferences = new LinkedList<>();
+
+            if (locationResponseType.getLocationUriSet() != null) {
+                Instant expires = toInstant(locationResponseType.getLocationUriSet().getExpires());
+                locationResponseType.getLocationUriSet().getLocationURI().forEach(
+                        uri -> resultReferences.add(new LocationReference(URI.create(uri.trim()), expires)));
+            }
 
             Optional<Presence> presenceOptional = JaxbElementUtil.getValue(locationResponseType.getAny(), Presence.class);
             presenceOptional.ifPresent(presence -> {
@@ -35,7 +45,7 @@ class SuccessResultParser {
                     }
                 }
             });
-            return resultLocations;
+            return Pair.of(resultLocations, resultReferences);
         } catch (Exception e) {
             throw new ResponseParsingException("Error parsing LocationResponseType", e);
         }
@@ -43,6 +53,10 @@ class SuccessResultParser {
 
     private Instant getTimestamp(Tuple tuple) {
         XMLGregorianCalendar tupleTimestamp = tuple.getTimestamp();
+        return toInstant(tupleTimestamp);
+    }
+
+    private Instant toInstant(XMLGregorianCalendar tupleTimestamp) {
         return tupleTimestamp.toGregorianCalendar().getTime().toInstant();
     }
 

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -73,6 +74,7 @@ class HeldIntegrationTest {
                     List<Location> locations = findLocationResult.getLocations();
                     assertThat("identifier", request.getIdentifier(), is("identifier"));
                     assertThat("result size", locations, hasSize(1));
+                    assertThat("references", findLocationResult.getLocationReferences().iterator().next().getUri(), is(URI.create("https://ls.example.com:9768/357yc6s64ceyoiuy5ax3o")));
                     countDownLatch.countDown();
                 }
 
@@ -201,6 +203,10 @@ class HeldIntegrationTest {
     private String getSuccessLocationResponse() {
         return "<?xml version=\"1.0\"?>\n" +
                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
+                "<locationUriSet expires=\"2006-01-01T13:00:00.0Z\">\n" +
+                "       <locationURI>https://ls.example.com:9768/357yc6s64ceyoiuy5ax3o\n" +
+                "       </locationURI>\n" +
+                "     </locationUriSet>" +
                 "     <presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\n" +
                 "      entity=\"pres:3650n87934c@ls.example.com\">\n" +
                 "      <tuple id=\"b650sf789nd\">\n" +

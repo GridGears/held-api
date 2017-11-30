@@ -2,13 +2,17 @@ package at.gridgears.held.internal.parser;
 
 
 import at.gridgears.held.FindLocationResult;
+import at.gridgears.held.Location;
+import at.gridgears.held.LocationReference;
 import at.gridgears.schemas.held.ErrorType;
 import at.gridgears.schemas.held.LocationResponseType;
 import at.gridgears.schemas.held.LocationTypeType;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
 import javax.xml.transform.stream.StreamSource;
 import java.io.StringReader;
+import java.util.List;
 import java.util.Optional;
 
 public class ResponseParser {
@@ -31,7 +35,8 @@ public class ResponseParser {
 
         Optional<LocationResponseType> locationResponseTypeOptional = JaxbElementUtil.getValue(unmarshalled, LocationResponseType.class);
         if (locationResponseTypeOptional.isPresent()) {
-            return FindLocationResult.createFoundResult(successResultParser.parse(locationResponseTypeOptional.get()));
+            Pair<List<Location>, List<LocationReference>> parseResult = successResultParser.parse(locationResponseTypeOptional.get());
+            return FindLocationResult.createFoundResult(parseResult.getLeft(), parseResult.getRight());
         } else {
             Optional<ErrorType> errorTypeOptional = JaxbElementUtil.getValue(unmarshalled, ErrorType.class);
             if (errorTypeOptional.isPresent()) {

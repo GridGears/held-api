@@ -27,14 +27,14 @@ public class FindLocationRequest implements Serializable {
     private final boolean exact;
 
     public FindLocationRequest(String identifier) {
-        this(identifier, Collections.emptyList(), null, false);
+        this(identifier, Collections.emptyList(), false, null);
     }
 
     public FindLocationRequest(String identifier, List<LocationType> locationTypes, boolean exact) {
-        this(identifier, locationTypes, null, exact);
+        this(identifier, locationTypes, exact, null);
     }
 
-    public FindLocationRequest(String identifier, List<LocationType> locationTypes, @Nullable ResponseTime responseTime, boolean exact) {
+    public FindLocationRequest(String identifier, List<LocationType> locationTypes, boolean exact, @Nullable ResponseTime responseTime) {
         Validate.notEmpty(identifier, "identifier must not be null or empty");
         Validate.notNull(locationTypes, "locationTypes must not be null");
         Validate.noNullElements(locationTypes, "locationTypes must not contain null values");

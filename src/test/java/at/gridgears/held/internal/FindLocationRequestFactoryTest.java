@@ -81,21 +81,21 @@ class FindLocationRequestFactoryTest {
                                 "        <ns2:uri>tel:123456789</ns2:uri>\n" +
                                 "    </ns2:device>\n" +
                                 "</locationRequest>"),
-                new TestData(new FindLocationRequest("tel:123456789", Collections.emptyList(), FindLocationRequest.ResponseTime.createForDuration(Duration.ofSeconds(1L)), false),
+                new TestData(new FindLocationRequest("tel:123456789", Collections.emptyList(), false, FindLocationRequest.ResponseTime.createForDuration(Duration.ofSeconds(1L))),
                         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                                 "<locationRequest xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" xmlns:ns2=\"urn:ietf:params:xml:ns:geopriv:held:id\" responseTime=\"1000\">\n" +
                                 "   <ns2:device>\n" +
                                 "        <ns2:uri>tel:123456789</ns2:uri>\n" +
                                 "    </ns2:device>\n" +
                                 "</locationRequest>"),
-                new TestData(new FindLocationRequest("tel:123456789", Collections.emptyList(), FindLocationRequest.ResponseTime.createForEmergencyRouting(), false),
+                new TestData(new FindLocationRequest("tel:123456789", Collections.emptyList(), false, FindLocationRequest.ResponseTime.createForEmergencyRouting()),
                         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                                 "<locationRequest xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" xmlns:ns2=\"urn:ietf:params:xml:ns:geopriv:held:id\" responseTime=\"emergencyRouting\">\n" +
                                 "   <ns2:device>\n" +
                                 "        <ns2:uri>tel:123456789</ns2:uri>\n" +
                                 "    </ns2:device>\n" +
                                 "</locationRequest>"),
-                new TestData(new FindLocationRequest("tel:123456789", Collections.emptyList(), FindLocationRequest.ResponseTime.createForEmergencyDispatch(), false),
+                new TestData(new FindLocationRequest("tel:123456789", Collections.emptyList(), false, FindLocationRequest.ResponseTime.createForEmergencyDispatch()),
                         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
                                 "<locationRequest xmlns=\"urn:ietf:params:xml:ns:geopriv:held\" xmlns:ns2=\"urn:ietf:params:xml:ns:geopriv:held:id\" responseTime=\"emergencyDispatch\">\n" +
                                 "   <ns2:device>\n" +

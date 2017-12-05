@@ -40,6 +40,10 @@
             <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
     </distributionManagement>
 
     <properties>
@@ -218,11 +222,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.8</version>
+                <version>3.7</version>
                 <configuration>
                     <sourceEncoding>utf-8</sourceEncoding>
                     <targetJdk>1.8</targetJdk>
                     <includeTests>true</includeTests>
+                    <rulesets>
+                        <ruleset>gridgears-pmd-ruleset.xml</ruleset>
+                    </rulesets>
                     <printFailingErrors>true</printFailingErrors>
                 </configuration>
                 <executions>
@@ -233,11 +240,18 @@
                         </goals>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>at.gridgears</groupId>
+                        <artifactId>codechecks</artifactId>
+                        <version>1.0.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.5</version>
+                <version>3.0.4</version>
                 <executions>
                     <execution>
                         <phase>test-compile</phase>
@@ -250,6 +264,7 @@
                             <includeTests>true</includeTests>
                             <threshold>Low</threshold>
                             <effort>Max</effort>
+                            <excludeFilterFile>gridgears-findbugs-excludes.xml</excludeFilterFile>
                         </configuration>
                     </execution>
                 </executions>
@@ -259,8 +274,14 @@
                     <includeTests>true</includeTests>
                     <threshold>Low</threshold>
                     <effort>Max</effort>
+                    <excludeFilterFile>gridgears-findbugs-excludes.xml</excludeFilterFile>
                 </configuration>
                 <dependencies>
+                    <dependency>
+                        <groupId>at.gridgears</groupId>
+                        <artifactId>codechecks</artifactId>
+                        <version>1.0.0</version>
+                    </dependency>
                     <dependency>
                         <groupId>com.google.code.findbugs</groupId>
                         <artifactId>annotations</artifactId>

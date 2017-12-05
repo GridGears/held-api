@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.*;
 
-public class FindLocationResult implements Serializable {
+public final class FindLocationResult implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final String ERROR_LOCATION_UNKNOWN = "locationUnknown";
 

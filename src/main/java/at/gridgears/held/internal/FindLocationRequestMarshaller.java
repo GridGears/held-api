@@ -25,7 +25,7 @@ class FindLocationRequestMarshaller {
     }
 
     private String marshallLocationTypes(FindLocationRequest request) {
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new StringBuilder(30);
         if (!request.getLocationTypes().isEmpty()) {
             result.append(String.format("   <locationType exact=\"%s\">\n", request.isExact()));
             request.getLocationTypes().forEach(locationType -> result.append(String.format("       %s\n", getLocationTypeString(locationType))));

@@ -54,15 +54,15 @@ class HeldClientTest {
     @Mock
     private HttpPost httpPost;
 
-    private URI uri = URI.create("http://gridgearstest/held");
+    private final URI uri = URI.create("http://gridgearstest/held");
 
-    private FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))),Collections.emptyList());
+    private final FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))),Collections.emptyList());
 
-    private FindLocationRequest findLocationRequest = new FindLocationRequest(DEVICE_IDENTIFIER);
+    private final FindLocationRequest findLocationRequest = new FindLocationRequest(DEVICE_IDENTIFIER);
+
+    private final List<Header> expectedHeaders = new ArrayList<>();
 
     private HeldClient heldClient;
-
-    private List<Header> expectedHeaders = new ArrayList<>();
 
     @BeforeEach
     void initMocks() {

@@ -13,16 +13,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 class SuccessResultParser {
     Pair<List<Location>, List<LocationReference>> parse(LocationResponseType locationResponseType) throws ResponseParsingException {
         try {
-            List<Location> resultLocations = new LinkedList<>();
-            List<LocationReference> resultReferences = new LinkedList<>();
-
-            extractReferences(locationResponseType, resultReferences);
-            extractLocations(locationResponseType, resultLocations);
+            List<Location> resultLocations = extractLocations(locationResponseType);
+            List<LocationReference> resultReferences = extractReferences(locationResponseType);
 
             return Pair.of(resultLocations, resultReferences);
         } catch (Exception e) {
@@ -30,33 +26,38 @@ class SuccessResultParser {
         }
     }
 
-    private void extractReferences(LocationResponseType locationResponseType, List<LocationReference> resultReferences) {
+    private List<LocationReference> extractReferences(LocationResponseType locationResponseType) {
         MutableObject<Instant> expires = new MutableObject<>();
 
+        List<LocationReference> result = new LinkedList<>();
         Optional.ofNullable(locationResponseType.getLocationUriSet())
                 .map(storeExpires(expires))
                 .map(ReturnLocationType::getLocationURI)
                 .map(List::stream)
                 .ifPresent(stream ->
-                    stream.forEach(uri -> resultReferences.add(new LocationReference(URI.create(uri.trim()), expires.getValue())))
+                        stream.forEach(uri -> result.add(new LocationReference(URI.create(uri.trim()), expires.getValue())))
                 );
+        return result;
     }
 
-    private void extractLocations(LocationResponseType locationResponseType, List<Location> resultLocations) {
+    private List<Location> extractLocations(LocationResponseType locationResponseType) {
         MutableObject<Instant> timestamp = new MutableObject<>();
 
+        List<Location> result = new LinkedList<>();
+
         JaxbElementUtil.getValue(locationResponseType.getAny(), Presence.class)
-            .map(Presence::getTuple)
-            .map(SuccessResultParser::first)
-            .map(storeTimestamp(timestamp))
-            .map(Tuple::getStatus)
-            .map(Status::getAny)
-            .map(SuccessResultParser::first)
-            .map(SuccessResultParser::getGeopriv)
-            .map(Geopriv::getLocationInfo)
-            .ifPresent(locInfoType ->
-                   resultLocations.addAll(parseLocations(locInfoType.getAny(),timestamp.getValue()))
-            );
+                .map(Presence::getTuple)
+                .map(SuccessResultParser::first)
+                .map(storeTimestamp(timestamp))
+                .map(Tuple::getStatus)
+                .map(Status::getAny)
+                .map(SuccessResultParser::first)
+                .map(SuccessResultParser::getGeopriv)
+                .map(Geopriv::getLocationInfo)
+                .ifPresent(locInfoType ->
+                        result.addAll(parseLocations(locInfoType.getAny(), timestamp.getValue()))
+                );
+        return result;
     }
 
     private Function<ReturnLocationType, ReturnLocationType> storeExpires(MutableObject<Instant> expires) {

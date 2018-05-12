@@ -1,9 +1,6 @@
 package at.gridgears.held.internal.parser;
 
-import at.gridgears.held.FindLocationError;
-import at.gridgears.held.FindLocationResult;
-import at.gridgears.held.Location;
-import at.gridgears.held.LocationReference;
+import at.gridgears.held.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -140,6 +137,49 @@ class ResponseParserTest {
                                 new LocationReference(URI.create("https://ls.example.com:9768/357yc6s64ceyoiuy5ax3o"), Instant.parse("2006-01-01T13:00:00.0Z")),
                                 new LocationReference(URI.create("sip:9769+357yc6s64ceyoiuy5ax3o@ls.example.com"), Instant.parse("2006-01-01T13:00:00.0Z"))
                         ))),
+                new TestParsingData("ResultWithAmlData",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
+                                "     <presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\n" +
+                                "      entity=\"pres:3650n87934c@ls.example.com\">\n" +
+                                "      <tuple id=\"b650sf789nd\">\n" +
+                                "       <status>\n" +
+                                "        <geopriv xmlns=\"urn:ietf:params:xml:ns:pidf:geopriv10\">\n" +
+                                "         <location-info>\n" +
+                                "          <Point xmlns=\"http://www.opengis.net/gml\"\n" +
+                                "           srsName=\"urn:ogc:def:crs:EPSG::4326\">\n" +
+                                "           <pos>-34.407 150.88001</pos>\n" +
+                                "          </Point>\n" +
+                                "         </location-info>\n" +
+                                "         <usage-rules\n" +
+                                "          xmlns:gbp=\"urn:ietf:params:xml:ns:pidf:geopriv10:basicPolicy\">\n" +
+                                "          <gbp:retention-expiry>2006-01-11T03:42:28+00:00\n" +
+                                "          </gbp:retention-expiry>\n" +
+                                "         </usage-rules>\n" +
+                                "         <method>Wiremap</method>\n" +
+                                "         <aml xmlns=\"urn:ietf:params:xml:ns:gridgears:aml\"\n" +
+                                "                         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                                "                         xsi:schemaLocation=\"urn:ietf:params:xml:ns:gridgears:aml ../main/xsd/held/aml.xsd\">\n" +
+                                "                        <latitude>-34.407</latitude>\n" +
+                                "                        <longitude>150.88001</longitude>\n" +
+                                "                        <radius>12</radius>\n" +
+                                "                        <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
+                                "                        <confidenceLevel>87</confidenceLevel>\n" +
+                                "                        <positioningMethod>GNSS</positioningMethod>\n" +
+                                "                        <imsi>234302543446355</imsi>\n" +
+                                "                        <imei>356708041746734</imei>\n" +
+                                "                        <mcc>234</mcc>\n" +
+                                "                        <mnc>30</mnc>\n" +
+                                "                    </aml>\n" +
+                                "        </geopriv>\n" +
+                                "       </status>\n" +
+                                "       <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
+                                "      </tuple>\n" +
+                                "     </presence>\n" +
+                                "    </locationResponse>",
+                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10),
+                                        new AmlData(-34.407, 150.88001, 12, Instant.ofEpochSecond(10), 87, PositioningMethod.GNSS, "234302543446355", "356708041746734", "234", "30"))),
+                                Collections.emptyList())),
                 new TestParsingData("Multiple locations",
                         "<?xml version=\"1.0\"?>\n" +
                                 "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
@@ -173,7 +213,50 @@ class ResponseParserTest {
                                 "      </tuple>\n" +
                                 "     </presence>\n" +
                                 "    </locationResponse>",
-                        FindLocationResult.createFoundResult(Arrays.asList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)), new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))), Collections.emptyList()))
+                        FindLocationResult.createFoundResult(Arrays.asList(new Location(-34.407, 150.88001, 30.0, Instant.ofEpochSecond(10)), new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10))), Collections.emptyList())),
+                new TestParsingData("ResultWithAmlDataAndUnparsablePositioningMethod",
+                        "<?xml version=\"1.0\"?>\n" +
+                                "    <locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
+                                "     <presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\n" +
+                                "      entity=\"pres:3650n87934c@ls.example.com\">\n" +
+                                "      <tuple id=\"b650sf789nd\">\n" +
+                                "       <status>\n" +
+                                "        <geopriv xmlns=\"urn:ietf:params:xml:ns:pidf:geopriv10\">\n" +
+                                "         <location-info>\n" +
+                                "          <Point xmlns=\"http://www.opengis.net/gml\"\n" +
+                                "           srsName=\"urn:ogc:def:crs:EPSG::4326\">\n" +
+                                "           <pos>-34.407 150.88001</pos>\n" +
+                                "          </Point>\n" +
+                                "         </location-info>\n" +
+                                "         <usage-rules\n" +
+                                "          xmlns:gbp=\"urn:ietf:params:xml:ns:pidf:geopriv10:basicPolicy\">\n" +
+                                "          <gbp:retention-expiry>2006-01-11T03:42:28+00:00\n" +
+                                "          </gbp:retention-expiry>\n" +
+                                "         </usage-rules>\n" +
+                                "         <method>Wiremap</method>\n" +
+                                "         <aml xmlns=\"urn:ietf:params:xml:ns:gridgears:aml\"\n" +
+                                "                         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                                "                         xsi:schemaLocation=\"urn:ietf:params:xml:ns:gridgears:aml ../main/xsd/held/aml.xsd\">\n" +
+                                "                        <latitude>-34.407</latitude>\n" +
+                                "                        <longitude>150.88001</longitude>\n" +
+                                "                        <radius>12</radius>\n" +
+                                "                        <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
+                                "                        <confidenceLevel>87</confidenceLevel>\n" +
+                                "                        <positioningMethod>unparsable</positioningMethod>\n" +
+                                "                        <imsi>234302543446355</imsi>\n" +
+                                "                        <imei>356708041746734</imei>\n" +
+                                "                        <mcc>234</mcc>\n" +
+                                "                        <mnc>30</mnc>\n" +
+                                "                    </aml>\n" +
+                                "        </geopriv>\n" +
+                                "       </status>\n" +
+                                "       <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
+                                "      </tuple>\n" +
+                                "     </presence>\n" +
+                                "    </locationResponse>",
+                        FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10),
+                                        new AmlData(-34.407, 150.88001, 12, Instant.ofEpochSecond(10), 87, PositioningMethod.UNKNOWN, "234302543446355", "356708041746734", "234", "30"))),
+                                Collections.emptyList()))
         );
     }
 

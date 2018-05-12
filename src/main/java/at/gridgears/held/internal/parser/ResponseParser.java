@@ -4,6 +4,7 @@ package at.gridgears.held.internal.parser;
 import at.gridgears.held.FindLocationResult;
 import at.gridgears.held.Location;
 import at.gridgears.held.LocationReference;
+import at.gridgears.schemas.held.AmlType;
 import at.gridgears.schemas.held.ErrorType;
 import at.gridgears.schemas.held.LocationResponseType;
 import at.gridgears.schemas.held.LocationTypeType;
@@ -24,7 +25,7 @@ public class ResponseParser {
         jaxb2Marshaller = new Jaxb2Marshaller();
         jaxb2Marshaller.setSupportJaxbElementClass(true);
         jaxb2Marshaller.setCheckForXmlRootElement(false);
-        jaxb2Marshaller.setClassesToBeBound(LocationResponseType.class, LocationTypeType.class, ErrorType.class);
+        jaxb2Marshaller.setClassesToBeBound(LocationResponseType.class, LocationTypeType.class, ErrorType.class, AmlType.class);
 
         this.successResultParser = new SuccessResultParser();
         this.errorResultParser = new ErrorResultParser(language);
@@ -33,12 +34,12 @@ public class ResponseParser {
     public FindLocationResult parse(String responseContent) throws ResponseParsingException {
         Object unmarshalled = unmarshall(responseContent);
 
-        Optional<LocationResponseType> locationResponseTypeOptional = JaxbElementUtil.getValue(unmarshalled, LocationResponseType.class);
+        Optional<LocationResponseType> locationResponseTypeOptional = ParseUtils.getValue(unmarshalled, LocationResponseType.class);
         if (locationResponseTypeOptional.isPresent()) {
             Pair<List<Location>, List<LocationReference>> parseResult = successResultParser.parse(locationResponseTypeOptional.get());
             return FindLocationResult.createFoundResult(parseResult.getLeft(), parseResult.getRight());
         } else {
-            Optional<ErrorType> errorTypeOptional = JaxbElementUtil.getValue(unmarshalled, ErrorType.class);
+            Optional<ErrorType> errorTypeOptional = ParseUtils.getValue(unmarshalled, ErrorType.class);
             if (errorTypeOptional.isPresent()) {
                 return FindLocationResult.createFailureResult(errorResultParser.parse(errorTypeOptional.get()));
             } else {

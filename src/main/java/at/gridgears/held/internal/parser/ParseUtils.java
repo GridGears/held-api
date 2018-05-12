@@ -1,11 +1,13 @@
 package at.gridgears.held.internal.parser;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-final class JaxbElementUtil {
-    private JaxbElementUtil() {
+final class ParseUtils {
+    private ParseUtils() {
         //must not be instantiated
     }
 
@@ -34,4 +36,13 @@ final class JaxbElementUtil {
 
         return Optional.ofNullable(result);
     }
+
+    static <T> T first(List<T> list) {
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    static Instant toInstant(XMLGregorianCalendar xmlGregorianCalendar) {
+        return xmlGregorianCalendar.toGregorianCalendar().getTime().toInstant();
+    }
+
 }

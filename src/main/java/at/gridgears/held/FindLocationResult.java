@@ -14,6 +14,7 @@ public final class FindLocationResult implements Serializable {
     private final FindLocationError error;
     private final List<Location> locations;
     private final List<LocationReference> locationReferences;
+    private final String rawResponse;
 
     public enum Status {
         FOUND,
@@ -21,13 +22,18 @@ public final class FindLocationResult implements Serializable {
         ERROR
     }
 
-    private FindLocationResult(List<Location> locations, List<LocationReference> locationReferences, @Nullable FindLocationError error) {
+    private FindLocationResult(List<Location> locations, List<LocationReference> locationReferences, @Nullable FindLocationError error, final String rawResponse) {
         Validate.noNullElements(locations, "locations must not be null or contain null elements");
         Validate.noNullElements(locationReferences, "locationReferences must not be null or contain null elements");
 
         this.error = error;
         this.locations = Collections.unmodifiableList(new ArrayList<>(locations));
         this.locationReferences = Collections.unmodifiableList(new ArrayList<>(locationReferences));
+        this.rawResponse = rawResponse;
+    }
+
+    public String getRawResponse() {
+        return rawResponse;
     }
 
     public List<Location> getLocations() {
@@ -55,16 +61,16 @@ public final class FindLocationResult implements Serializable {
         return result;
     }
 
-    public static FindLocationResult createFailureResult(FindLocationError error) {
+    public static FindLocationResult createFailureResult(FindLocationError error, String rawResponse) {
         Validate.notNull(error, "error must not be null");
-        return new FindLocationResult(Collections.emptyList(), Collections.emptyList(), error);
+        return new FindLocationResult(Collections.emptyList(), Collections.emptyList(), error, rawResponse);
     }
 
-    public static FindLocationResult createFoundResult(List<Location> locations, List<LocationReference> locationReferences) {
+    public static FindLocationResult createFoundResult(List<Location> locations, List<LocationReference> locationReferences, String rawResponse) {
         if (locations.isEmpty() && locationReferences.isEmpty()) {
             throw new IllegalArgumentException("locations and locationReferences must not both be empty for a success result");
         }
-        return new FindLocationResult(locations, locationReferences, null);
+        return new FindLocationResult(locations, locationReferences, null, rawResponse);
     }
 
     @Override

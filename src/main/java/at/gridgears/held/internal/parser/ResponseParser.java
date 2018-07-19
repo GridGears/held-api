@@ -37,11 +37,11 @@ public class ResponseParser {
         Optional<LocationResponseType> locationResponseTypeOptional = ParseUtils.getValue(unmarshalled, LocationResponseType.class);
         if (locationResponseTypeOptional.isPresent()) {
             Pair<List<Location>, List<LocationReference>> parseResult = successResultParser.parse(locationResponseTypeOptional.get());
-            return FindLocationResult.createFoundResult(parseResult.getLeft(), parseResult.getRight());
+            return FindLocationResult.createFoundResult(parseResult.getLeft(), parseResult.getRight(), responseContent);
         } else {
             Optional<ErrorType> errorTypeOptional = ParseUtils.getValue(unmarshalled, ErrorType.class);
             if (errorTypeOptional.isPresent()) {
-                return FindLocationResult.createFailureResult(errorResultParser.parse(errorTypeOptional.get()));
+                return FindLocationResult.createFailureResult(errorResultParser.parse(errorTypeOptional.get()), responseContent);
             } else {
                 throw new ResponseParsingException("Could not parse HELD response. Invalid content");
             }

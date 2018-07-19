@@ -39,6 +39,8 @@ import static org.mockito.Mockito.*;
 
 class HeldClientTest {
     private static final String DEVICE_IDENTIFIER = "+43123456789";
+    private static final String RESPONSE_CONTENT = "responseContent";
+
     @Mock
     private CloseableHttpAsyncClient httpAsyncClient;
 
@@ -56,7 +58,7 @@ class HeldClientTest {
 
     private final URI uri = URI.create("http://gridgearstest/held");
 
-    private final FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))),Collections.emptyList());
+    private final FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))),Collections.emptyList(), RESPONSE_CONTENT);
 
     private final FindLocationRequest findLocationRequest = new FindLocationRequest(DEVICE_IDENTIFIER);
 

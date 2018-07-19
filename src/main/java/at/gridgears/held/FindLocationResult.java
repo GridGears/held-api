@@ -14,6 +14,7 @@ public final class FindLocationResult implements Serializable {
     private final FindLocationError error;
     private final List<Location> locations;
     private final List<LocationReference> locationReferences;
+    private String rawRequest;
     private final String rawResponse;
 
     public enum Status {
@@ -34,6 +35,14 @@ public final class FindLocationResult implements Serializable {
 
     public String getRawResponse() {
         return rawResponse;
+    }
+
+    public void setRawRequest(String rawRequest) {
+        this.rawRequest = rawRequest;
+    }
+
+    public String getRawRequest() {
+        return rawRequest;
     }
 
     public List<Location> getLocations() {
@@ -84,12 +93,14 @@ public final class FindLocationResult implements Serializable {
         FindLocationResult that = (FindLocationResult) o;
         return Objects.equals(error, that.error) &&
                 Objects.equals(locations, that.locations) &&
-                Objects.equals(locationReferences, that.locationReferences);
+                Objects.equals(locationReferences, that.locationReferences) &&
+                Objects.equals(rawRequest, that.rawRequest) &&
+                Objects.equals(rawResponse, that.rawResponse);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(error, locations, locationReferences);
+        return Objects.hash(error, locations, locationReferences, rawRequest, rawResponse);
     }
 
     @Override

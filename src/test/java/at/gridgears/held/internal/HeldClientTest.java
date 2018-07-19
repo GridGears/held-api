@@ -5,10 +5,7 @@ import at.gridgears.held.FindLocationRequest;
 import at.gridgears.held.FindLocationResult;
 import at.gridgears.held.Location;
 import at.gridgears.held.internal.parser.ResponseParser;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.ProtocolVersion;
+import org.apache.http.*;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.entity.StringEntity;
@@ -58,7 +55,7 @@ class HeldClientTest {
 
     private final URI uri = URI.create("http://gridgearstest/held");
 
-    private final FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))),Collections.emptyList(), RESPONSE_CONTENT);
+    private final FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))), Collections.emptyList(), RESPONSE_CONTENT);
 
     private final FindLocationRequest findLocationRequest = new FindLocationRequest(DEVICE_IDENTIFIER);
 
@@ -112,6 +109,8 @@ class HeldClientTest {
 
         when(responseParser.parse("location")).thenReturn(successFindLocationResult);
 
+        HttpEntity entity = new StringEntity("requestString");
+        when(httpPost.getEntity()).thenReturn(entity);
         when(httpAsyncClient.execute(eq(httpPost), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
             ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
             return new CompletableFuture<>();
@@ -120,6 +119,8 @@ class HeldClientTest {
         heldClient.findLocation(findLocationRequest, callBack);
 
         verify(callBack).completed(findLocationRequest, successFindLocationResult);
+        
+        assertThat("request set on response object", successFindLocationResult.getRawRequest(), is("requestString"));
     }
 
     @Test

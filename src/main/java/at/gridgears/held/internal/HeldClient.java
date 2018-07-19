@@ -64,6 +64,7 @@ public class HeldClient implements Held {
                         EntityUtils.consume(response.getEntity());
                         LOG.debug("Received response for deviceIdentifier '{}': {}", request.getIdentifier(), heldResponse);
                         findLocationResult = responseParser.parse(heldResponse);
+                        findLocationResult.setRawRequest(EntityUtils.toString(httpPost.getEntity()));
                         callback.completed(request, findLocationResult);
                     } else {
                         callback.failed(request, new HeldException("HTTP error", statusCode + ": " + response.getStatusLine().getReasonPhrase()));

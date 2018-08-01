@@ -125,6 +125,29 @@ class HeldClientTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void correctSuccessLocationResultWithOnlyReference() throws Exception {
+        HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("http", 1, 1), HttpStatus.SC_OK, "SUCCESS"));
+        response.setStatusCode(HttpStatus.SC_OK);
+        response.setEntity(new StringEntity("location"));
+
+        when(responseParser.parse("location")).thenReturn(successFindLocationResult);
+
+        HttpEntity entity = new StringEntity("requestString");
+        when(httpPost.getEntity()).thenReturn(entity);
+        when(httpAsyncClient.execute(eq(httpPost), isA(FutureCallback.class))).thenAnswer((Answer<Future<HttpResponse>>) invocationOnMock -> {
+            ((FutureCallback) invocationOnMock.getArgument(1)).completed(response);
+            return new CompletableFuture<>();
+        });
+
+        heldClient.findLocation(findLocationRequest, callBack);
+
+        verify(callBack).completed(findLocationRequest, successFindLocationResult);
+
+        assertThat("request set on response object", successFindLocationResult.getRawRequest(), is("requestString"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void correctHttpErrorStatusCodeResult() throws Exception {
         HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("http", 1, 1), HttpStatus.SC_BAD_REQUEST, "Bad Request"));
 

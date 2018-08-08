@@ -1,9 +1,6 @@
 package at.gridgears.held.internal;
 
-import at.gridgears.held.FindLocationError;
-import at.gridgears.held.Location;
-import at.gridgears.held.FindLocationResult;
-import at.gridgears.held.LocationReference;
+import at.gridgears.held.*;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -20,19 +17,24 @@ class FindLocationResultTest {
     private static final String RESPONSE_CONTENT = "responseContent";
 
     @Test
-    void creatingFoundResultWithEmptyLocationsAndEmptyReferencesThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> FindLocationResult.createFoundResult(Collections.emptyList(), Collections.emptyList(), RESPONSE_CONTENT));
+    void creatingFoundResultWithEmptyLocationsAndEmptyCivicAndEmptyReferencesThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> FindLocationResult.createFoundResult(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), RESPONSE_CONTENT));
     }
 
     @Test
     void statusIsFoundForLocationResult() {
         Location location = mock(Location.class);
-        assertThat("status", FindLocationResult.createFoundResult(Collections.singletonList(location), Collections.emptyList(), RESPONSE_CONTENT).getStatus(), is(FindLocationResult.Status.FOUND));
+        assertThat("status", FindLocationResult.createFoundResult(Collections.singletonList(location), Collections.emptyList(), Collections.emptyList(), RESPONSE_CONTENT).getStatus(), is(FindLocationResult.Status.FOUND));
     }
 
     @Test
     void statusIsFoundForLocationReferenceResult() {
-        assertThat("status", FindLocationResult.createFoundResult(Collections.emptyList(), Collections.singletonList(new LocationReference(URI.create("http://example.com/1234"), Instant.now())), RESPONSE_CONTENT).getStatus(), is(FindLocationResult.Status.FOUND));
+        assertThat("status", FindLocationResult.createFoundResult(Collections.emptyList(), Collections.emptyList(), Collections.singletonList(new LocationReference(URI.create("http://example.com/1234"), Instant.now())), RESPONSE_CONTENT).getStatus(), is(FindLocationResult.Status.FOUND));
+    }
+
+    @Test
+    void statusIsFoundForCivicAddressResult() {
+        assertThat("status", FindLocationResult.createFoundResult(Collections.emptyList(), Collections.singletonList(CivicAddress.CivicAddressBuilder.builder().build()), Collections.emptyList(), RESPONSE_CONTENT).getStatus(), is(FindLocationResult.Status.FOUND));
     }
 
     @Test

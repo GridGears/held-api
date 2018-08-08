@@ -1,5 +1,7 @@
 package at.gridgears.held.internal.parser;
 
+import at.gridgears.schemas.held.CaType;
+
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.time.Instant;
@@ -39,6 +41,10 @@ final class ParseUtils {
 
     static <T> T first(List<T> list) {
         return list.isEmpty() ? null : list.get(0);
+    }
+
+    static Optional<String> getStringValue(CaType element) {
+        return Optional.ofNullable(element != null ? element.getValue() : null);
     }
 
     static Instant toInstant(XMLGregorianCalendar xmlGregorianCalendar) {

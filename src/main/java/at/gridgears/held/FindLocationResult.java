@@ -14,6 +14,7 @@ public final class FindLocationResult implements Serializable {
     private final FindLocationError error;
     private final List<Location> locations;
     private final List<LocationReference> locationReferences;
+    private final List<CivicAddress> civicAddresses;
     private String rawRequest;
     private final String rawResponse;
 
@@ -23,12 +24,14 @@ public final class FindLocationResult implements Serializable {
         ERROR
     }
 
-    private FindLocationResult(List<Location> locations, List<LocationReference> locationReferences, @Nullable FindLocationError error, final String rawResponse) {
+    private FindLocationResult(List<Location> locations, List<CivicAddress> civicAddresses, List<LocationReference> locationReferences, @Nullable FindLocationError error, final String rawResponse) {
         Validate.noNullElements(locations, "locations must not be null or contain null elements");
+        Validate.noNullElements(civicAddresses, "civicAddresses must not be null or contain null elements");
         Validate.noNullElements(locationReferences, "locationReferences must not be null or contain null elements");
 
         this.error = error;
         this.locations = Collections.unmodifiableList(new ArrayList<>(locations));
+        this.civicAddresses = Collections.unmodifiableList(new ArrayList<>(civicAddresses));
         this.locationReferences = Collections.unmodifiableList(new ArrayList<>(locationReferences));
         this.rawResponse = rawResponse;
     }
@@ -49,6 +52,10 @@ public final class FindLocationResult implements Serializable {
         return locations;
     }
 
+    public List<CivicAddress> getCivicAddresses() {
+        return civicAddresses;
+    }
+
     public List<LocationReference> getLocationReferences() {
         return locationReferences;
     }
@@ -59,7 +66,7 @@ public final class FindLocationResult implements Serializable {
 
     public Status getStatus() {
         Status result;
-        if (!locations.isEmpty() || !locationReferences.isEmpty()) {
+        if (!locations.isEmpty() || !civicAddresses.isEmpty() || !locationReferences.isEmpty()) {
             result = Status.FOUND;
         } else if (error.getCode().equals(ERROR_LOCATION_UNKNOWN)) {
             result = Status.NOT_FOUND;
@@ -72,14 +79,14 @@ public final class FindLocationResult implements Serializable {
 
     public static FindLocationResult createFailureResult(FindLocationError error, String rawResponse) {
         Validate.notNull(error, "error must not be null");
-        return new FindLocationResult(Collections.emptyList(), Collections.emptyList(), error, rawResponse);
+        return new FindLocationResult(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), error, rawResponse);
     }
 
-    public static FindLocationResult createFoundResult(List<Location> locations, List<LocationReference> locationReferences, String rawResponse) {
-        if (locations.isEmpty() && locationReferences.isEmpty()) {
-            throw new IllegalArgumentException("locations and locationReferences must not both be empty for a success result");
+    public static FindLocationResult createFoundResult(List<Location> locations, List<CivicAddress> civicAddresses, List<LocationReference> locationReferences, String rawResponse) {
+        if (locations.isEmpty() && civicAddresses.isEmpty() && locationReferences.isEmpty()) {
+            throw new IllegalArgumentException("locations, civicAddresses and locationReferences must not all be empty for a success result");
         }
-        return new FindLocationResult(locations, locationReferences, null, rawResponse);
+        return new FindLocationResult(locations, civicAddresses, locationReferences, null, rawResponse);
     }
 
     @Override
@@ -94,13 +101,15 @@ public final class FindLocationResult implements Serializable {
         return Objects.equals(error, that.error) &&
                 Objects.equals(locations, that.locations) &&
                 Objects.equals(locationReferences, that.locationReferences) &&
+                Objects.equals(civicAddresses, that.civicAddresses) &&
                 Objects.equals(rawRequest, that.rawRequest) &&
                 Objects.equals(rawResponse, that.rawResponse);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(error, locations, locationReferences, rawRequest, rawResponse);
+
+        return Objects.hash(error, locations, locationReferences, civicAddresses, rawRequest, rawResponse);
     }
 
     @Override
@@ -109,6 +118,9 @@ public final class FindLocationResult implements Serializable {
                 .append("error", error)
                 .append("locations", locations)
                 .append("locationReferences", locationReferences)
+                .append("civicAddresses", civicAddresses)
+                .append("rawRequest", rawRequest)
+                .append("rawResponse", rawResponse)
                 .toString();
     }
 }

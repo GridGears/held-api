@@ -55,7 +55,7 @@ class HeldClientTest {
 
     private final URI uri = URI.create("http://gridgearstest/held");
 
-    private final FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))), Collections.emptyList(), RESPONSE_CONTENT);
+    private final FindLocationResult successFindLocationResult = FindLocationResult.createFoundResult(Collections.singletonList(new Location(12.0, 13.0, 14.0, Instant.ofEpochSecond(12))), Collections.emptyList(), Collections.emptyList(), RESPONSE_CONTENT);
 
     private final FindLocationRequest findLocationRequest = new FindLocationRequest(DEVICE_IDENTIFIER);
 
@@ -119,7 +119,7 @@ class HeldClientTest {
         heldClient.findLocation(findLocationRequest, callBack);
 
         verify(callBack).completed(findLocationRequest, successFindLocationResult);
-        
+
         assertThat("request set on response object", successFindLocationResult.getRawRequest(), is("requestString"));
     }
 

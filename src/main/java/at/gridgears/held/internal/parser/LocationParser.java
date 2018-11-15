@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static at.gridgears.held.internal.parser.ParseUtils.getValue;
 import static at.gridgears.held.internal.parser.ParseUtils.toInstant;
 
 final class LocationParser {
@@ -20,6 +21,7 @@ final class LocationParser {
 
     List<Location> parse(LocationResponseType locationResponseType) {
         MutableObject<Instant> timestamp = new MutableObject<>();
+        MutableObject<AmlData> amlData = new MutableObject<>();
 
         List<Location> result = new LinkedList<>();
 
@@ -27,23 +29,21 @@ final class LocationParser {
                 .map(Presence::getTuple)
                 .map(ParseUtils::first)
                 .map(storeTimestamp(timestamp))
+                .map(storeAml(amlData))
                 .map(Tuple::getStatus)
                 .map(Status::getAny)
                 .map(ParseUtils::first)
                 .map(LocationParser::getGeopriv)
-                .ifPresent(geopriv -> result.addAll(parseLocation(geopriv, timestamp.getValue())));
+                .ifPresent(geopriv -> result.addAll(parseLocation(geopriv, timestamp.getValue(), amlData.getValue())));
         return result;
     }
 
-    private List<Location> parseLocation(Geopriv geopriv, Instant timestamp) {
+    private List<Location> parseLocation(Geopriv geopriv, Instant timestamp, AmlData amlData) {
         List<Location> result = new LinkedList<>();
-
-        MutableObject<AmlData> amlData = new MutableObject<>();
-        ParseUtils.getValue(geopriv.getAny(), AmlType.class).ifPresent(amlType -> amlData.setValue(amlDataParser.parseAmlData(amlType)));
 
         LocInfoType locationInfo = geopriv.getLocationInfo();
         if (locationInfo != null) {
-            result.addAll(parseLocations(locationInfo.getAny(), timestamp, amlData.getValue()));
+            result.addAll(parseLocations(locationInfo.getAny(), timestamp, amlData));
         }
 
         return result;
@@ -70,6 +70,13 @@ final class LocationParser {
         };
     }
 
+    private Function<Tuple, Tuple> storeAml(MutableObject<AmlData> amlData) {
+        return tuple -> {
+            Optional<AmlType> amlType = getValue(tuple.getAny(), AmlType.class);
+            amlType.ifPresent(aml -> amlData.setValue(amlDataParser.parseAmlData(aml)));
+            return tuple;
+        };
+    }
 
     private Instant getTimestamp(Tuple tuple) {
         XMLGregorianCalendar tupleTimestamp = tuple.getTimestamp();

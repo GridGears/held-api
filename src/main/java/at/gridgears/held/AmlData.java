@@ -11,7 +11,7 @@ public class AmlData implements Serializable {
 
     private final double latitude;
     private final double longitude;
-    private final int radius;
+    private final Double radius;
     private final Instant timestamp;
     private final int confidenceLevel;
     private final PositioningMethod positioningMethod;
@@ -20,7 +20,7 @@ public class AmlData implements Serializable {
     private final String mcc;
     private final String mnc;
 
-    public AmlData(double latitude, double longitude, int radius, Instant timestamp, int confidenceLevel, PositioningMethod positioningMethod, String imsi, String imei, String mcc, String mnc) {
+    public AmlData(double latitude, double longitude, Double radius, Instant timestamp, int confidenceLevel, PositioningMethod positioningMethod, String imsi, String imei, String mcc, String mnc) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.radius = radius;
@@ -31,6 +31,46 @@ public class AmlData implements Serializable {
         this.imei = imei;
         this.mcc = mcc;
         this.mnc = mnc;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public Double getRadius() {
+        return radius;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
+    }
+
+    public int getConfidenceLevel() {
+        return confidenceLevel;
+    }
+
+    public PositioningMethod getPositioningMethod() {
+        return positioningMethod;
+    }
+
+    public String getImsi() {
+        return imsi;
+    }
+
+    public String getImei() {
+        return imei;
+    }
+
+    public String getMcc() {
+        return mcc;
+    }
+
+    public String getMnc() {
+        return mnc;
     }
 
     @Override
@@ -44,7 +84,7 @@ public class AmlData implements Serializable {
         AmlData amlData = (AmlData) o;
         return Double.compare(amlData.latitude, latitude) == 0 &&
                 Double.compare(amlData.longitude, longitude) == 0 &&
-                radius == amlData.radius &&
+                ((radius == null && amlData.radius == null) || (radius != null && amlData.radius != null && Double.compare(amlData.radius, radius) == 0)) &&
                 confidenceLevel == amlData.confidenceLevel &&
                 Objects.equals(timestamp, amlData.timestamp) &&
                 positioningMethod == amlData.positioningMethod &&

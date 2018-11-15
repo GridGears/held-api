@@ -4,6 +4,7 @@ import at.gridgears.held.AmlData;
 import at.gridgears.held.PositioningMethod;
 import at.gridgears.schemas.held.AmlType;
 import at.gridgears.schemas.held.PositioningMethodType;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,7 +18,7 @@ class AmlDataParser {
     AmlData parseAmlData(AmlType amlType) {
         double latitude = amlType.getLatitude();
         double longitude = amlType.getLongitude();
-        int radius = amlType.getRadius();
+        Double radius = StringUtils.isNumeric(amlType.getRadius()) ? Double.valueOf(amlType.getRadius()) : null;
         Instant timestamp = toInstant(amlType.getTimestamp());
         int confidenceLevel = amlType.getConfidenceLevel();
         PositioningMethod positioningMethod;

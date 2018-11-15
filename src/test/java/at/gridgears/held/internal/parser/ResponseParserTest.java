@@ -138,22 +138,22 @@ class ResponseParserTest {
                 "          </gbp:retention-expiry>\n" +
                 "         </usage-rules>\n" +
                 "         <method>Wiremap</method>\n" +
-                "         <aml xmlns=\"urn:ietf:params:xml:ns:gridgears:aml\"\n" +
-                "                         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                "                         xsi:schemaLocation=\"urn:ietf:params:xml:ns:gridgears:aml ../main/xsd/held/aml.xsd\">\n" +
-                "                        <latitude>-34.407</latitude>\n" +
-                "                        <longitude>150.88001</longitude>\n" +
-                "                        <radius>12</radius>\n" +
-                "                        <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
-                "                        <confidenceLevel>87</confidenceLevel>\n" +
-                "                        <positioningMethod>GNSS</positioningMethod>\n" +
-                "                        <imsi>234302543446355</imsi>\n" +
-                "                        <imei>356708041746734</imei>\n" +
-                "                        <mcc>234</mcc>\n" +
-                "                        <mnc>30</mnc>\n" +
-                "                    </aml>\n" +
                 "        </geopriv>\n" +
                 "       </status>\n" +
+                "       <aml xmlns=\"http://schemas.gridgears.io/aml\"\n" +
+                "           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "           xsi:schemaLocation=\"urn:ietf:params:xml:ns:gridgears:aml ../main/xsd/held/GridGears_aml.xsd\">\n" +
+                "           <latitude>-34.407</latitude>\n" +
+                "           <longitude>150.88001</longitude>\n" +
+                "           <radius>12</radius>\n" +
+                "           <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
+                "           <confidenceLevel>87</confidenceLevel>\n" +
+                "           <positioningMethod>GNSS</positioningMethod>\n" +
+                "           <imsi>234302543446355</imsi>\n" +
+                "           <imei>356708041746734</imei>\n" +
+                "           <mcc>234</mcc>\n" +
+                "           <mnc>30</mnc>\n" +
+                "       </aml>\n" +
                 "       <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
                 "      </tuple>\n" +
                 "     </presence>\n" +
@@ -209,22 +209,21 @@ class ResponseParserTest {
                 "          </gbp:retention-expiry>\n" +
                 "         </usage-rules>\n" +
                 "         <method>Wiremap</method>\n" +
-                "         <aml xmlns=\"urn:ietf:params:xml:ns:gridgears:aml\"\n" +
-                "                         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                "                         xsi:schemaLocation=\"urn:ietf:params:xml:ns:gridgears:aml ../main/xsd/held/aml.xsd\">\n" +
-                "                        <latitude>-34.407</latitude>\n" +
-                "                        <longitude>150.88001</longitude>\n" +
-                "                        <radius>12</radius>\n" +
-                "                        <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
-                "                        <confidenceLevel>87</confidenceLevel>\n" +
-                "                        <positioningMethod>unparsable</positioningMethod>\n" +
-                "                        <imsi>234302543446355</imsi>\n" +
-                "                        <imei>356708041746734</imei>\n" +
-                "                        <mcc>234</mcc>\n" +
-                "                        <mnc>30</mnc>\n" +
-                "                    </aml>\n" +
                 "        </geopriv>\n" +
                 "       </status>\n" +
+                "       <aml xmlns=\"http://schemas.gridgears.io/aml\"\n" +
+                "           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                "           xsi:schemaLocation=\"urn:ietf:params:xml:ns:gridgears:aml ../main/xsd/held/GridGears_aml.xsd\">\n" +
+                "           <latitude>-34.407</latitude>\n" +
+                "           <longitude>150.88001</longitude>\n" +
+                "           <radius>12</radius>\n" +
+                "           <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
+                "           <confidenceLevel>87</confidenceLevel>\n" +
+                "           <imsi>234302543446355</imsi>\n" +
+                "           <imei>356708041746734</imei>\n" +
+                "           <mcc>234</mcc>\n" +
+                "           <mnc>30</mnc>\n" +
+                "       </aml>\n" +
                 "       <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
                 "      </tuple>\n" +
                 "     </presence>\n" +
@@ -301,7 +300,7 @@ class ResponseParserTest {
                 new TestParsingData("ResultWithAmlData",
                         amlData,
                         FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10),
-                                        new AmlData(-34.407, 150.88001, 12, Instant.ofEpochSecond(10), 87, PositioningMethod.GNSS, "234302543446355", "356708041746734", "234", "30"))),
+                                        new AmlData(-34.407, 150.88001, 12.0, Instant.ofEpochSecond(10), 87, PositioningMethod.GNSS, "234302543446355", "356708041746734", "234", "30"))),
                                 Collections.emptyList(), Collections.emptyList(), amlData)),
                 new TestParsingData("Multiple locations",
                         multipleLocations,
@@ -309,7 +308,7 @@ class ResponseParserTest {
                 new TestParsingData("ResultWithAmlDataAndUnparsablePositioningMethod",
                         amlDataUnparsablePositioningMethod,
                         FindLocationResult.createFoundResult(Collections.singletonList(new Location(-34.407, 150.88001, 0.0, Instant.ofEpochSecond(10),
-                                        new AmlData(-34.407, 150.88001, 12, Instant.ofEpochSecond(10), 87, PositioningMethod.UNKNOWN, "234302543446355", "356708041746734", "234", "30"))),
+                                        new AmlData(-34.407, 150.88001, 12.0, Instant.ofEpochSecond(10), 87, PositioningMethod.UNKNOWN, "234302543446355", "356708041746734", "234", "30"))),
                                 Collections.emptyList(), Collections.emptyList(), amlDataUnparsablePositioningMethod)),
                 new TestParsingData("ResultWithCivicLocation",
                         civic,

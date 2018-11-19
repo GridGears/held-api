@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ResponseParserTest {
@@ -35,6 +36,56 @@ class ResponseParserTest {
     void parsingInvalidResponseThrowsException() {
         assertThrows(ResponseParsingException.class,
                 () -> parser.parse("invalid input"));
+    }
+
+    @Test
+    void parseRealResponse() throws ResponseParsingException {
+        String realResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
+                "<locationResponse xmlns=\"urn:ietf:params:xml:ns:geopriv:held\">\n" +
+                "    <locationUriSet expires=\"2018-11-19T07:14:14+00:00\">\n" +
+                "        <locationURI>https://lis.gridgears.io/api/locref?ref=f700cd99-910d-43de-8292-9d54ee25cd16</locationURI>\n" +
+                "    </locationUriSet>\n" +
+                "    <presence entity=\"pres:8yaekiumq3ilhux\" xmlns=\"urn:ietf:params:xml:ns:pidf\">\n" +
+                "        <tuple id=\"8akfogeuxjb3ebx\">\n" +
+                "            <status>\n" +
+                "                <geopriv xmlns=\"urn:ietf:params:xml:ns:pidf:geopriv10\">\n" +
+                "                    <location-info>\n" +
+                "                        <gs:Circle xmlns:gml=\"http://www.opengis.net/gml\" srsName=\"urn:ogc:def:crs:EPSG::4326\" xmlns:gs=\"http://www.opengis.net/pidflo/1.0\">\n" +
+                "                            <gml:pos>48.21532 16.29028</gml:pos>\n" +
+                "                            <gs:radius uom=\"urn:ogc:def:uom:EPSG::9001\">19.0</gs:radius>\n" +
+                "                        </gs:Circle>\n" +
+                "                        <civicAddress xmlns=\"urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr\">\n" +
+                "                            <country>AT</country>\n" +
+                "                            <A1>Wien</A1>\n" +
+                "                            <A4>Wien</A4>\n" +
+                "                            <STS>Gallitzinstraße</STS>\n" +
+                "                            <HNO>31</HNO>\n" +
+                "                            <PC>1160</PC>\n" +
+                "                        </civicAddress>\n" +
+                "                    </location-info>\n" +
+                "                    <usage-rules/>\n" +
+                "                    <method>gnss</method>\n" +
+                "                </geopriv>\n" +
+                "            </status>\n" +
+                "            <aml xmlns=\"http://schemas.gridgears.io/aml\">\n" +
+                "                <latitude>48.21532</latitude>\n" +
+                "                <longitude>16.29028</longitude>\n" +
+                "                <radius>19.0</radius>\n" +
+                "                <timestamp>2018-11-19T07:03:52+00:00</timestamp>\n" +
+                "                <confidenceLevel>0.68</confidenceLevel>\n" +
+                "                <positioningMethod>GNSS</positioningMethod>\n" +
+                "                <imsi>232077610347784</imsi>\n" +
+                "                <imei>354074097769407</imei>\n" +
+                "                <mcc>232</mcc>\n" +
+                "                <mnc>03</mnc>\n" +
+                "            </aml>\n" +
+                "            <timestamp>2018-11-19T07:03:52+00:00</timestamp>\n" +
+                "        </tuple>\n" +
+                "    </presence>\n" +
+                "    <additionalLocations xmlns=\"http://schemas.gridgears.io/held\"/>\n" +
+                "</locationResponse>";
+        FindLocationResult result = parser.parse(realResponse);
+        assertThat("response", result, notNullValue());
     }
 
     static Stream<TestParsingData> testParsingData() {
@@ -258,6 +309,7 @@ class ResponseParserTest {
                 "        </tuple>\n" +
                 "    </presence>\n" +
                 "</locationResponse>\n";
+
         CivicAddress civicAddress = CivicAddress.CivicAddressBuilder.builder()
                 .withCountry("AU")
                 .withA1("NSW")

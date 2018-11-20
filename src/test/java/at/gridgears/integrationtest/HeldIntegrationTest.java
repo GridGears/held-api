@@ -3,61 +3,63 @@ package at.gridgears.integrationtest;
 import at.gridgears.held.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.http.Header;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.localserver.LocalTestServer;
+import org.apache.http.localserver.LocalServerTestBase;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.fail;
 
-@SuppressWarnings("PMD.TooManyStaticImports")
-class HeldIntegrationTest {
+@SuppressWarnings({"PMD.TooManyStaticImports", "PMD.JUnit4TestShouldUseAfterAnnotation"})
+class HeldIntegrationTest extends LocalServerTestBase {
     private static final Logger LOG = LogManager.getLogger();
     private static final Duration TIMEOUT = Duration.ofSeconds(5L);
     private static final Header AUTHENTICATION_HEADER = new BasicHeader("authentication", "token");
-    private static LocalTestServer server;
-    private static Held held;
-    private static String path = "/heldtest/";
+    private Held held;
+    private static final String PATH = "/heldtest/";
+    private final AtomicReference<String> responseContent = new AtomicReference<>();
+    private final AtomicInteger responseStatusCode = new AtomicInteger(-1);
 
-    @BeforeAll
-    static void setupTestServer() throws Exception {
-        server = new LocalTestServer(null, null);
-        server.start();
+    @BeforeEach
+    void setupTestServer() throws Exception {
+        setUp();
+        registerHandler();
+        HttpHost server = start();
 
-        String serverUrl = "http://" + server.getServiceHostName() + ":" + server.getServicePort();
+        String serverUrl = "http://" + server.getHostName() + ":" + server.getPort();
         LOG.info("LocalTestServer available at {}", serverUrl);
-    }
 
-    @BeforeAll
-    static void setupHeld() {
-        String uri = "http://127.0.0.1:" + server.getServicePort() + path;
+        String uri = "http://" + server.getHostName() + ':' + server.getPort() + PATH;
         held = new HeldBuilder().withURI(uri).withHeader(AUTHENTICATION_HEADER.getName(), AUTHENTICATION_HEADER.getValue()).build();
     }
 
-    @AfterAll
-    static void stopTestServer() throws Exception {
-        server.stop();
+    @AfterEach
+    void tearDown() throws Exception {
+        super.shutDown();
     }
 
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    void successfulRequest() throws InterruptedException {
+    void successfulRequest() {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -92,7 +94,7 @@ class HeldIntegrationTest {
 
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    void notFoundResponse() throws InterruptedException {
+    void notFoundResponse() {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -121,7 +123,7 @@ class HeldIntegrationTest {
 
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    void errorResponse() throws InterruptedException {
+    void errorResponse() {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -150,13 +152,11 @@ class HeldIntegrationTest {
 
     @Test
     @SuppressFBWarnings("SIC_INNER_SHOULD_BE_STATIC_ANON")
-    void httpErrorStatus() throws InterruptedException {
+    void httpErrorStatus() {
         assertTimeoutPreemptively(TIMEOUT, () -> {
             CountDownLatch countDownLatch = new CountDownLatch(1);
 
-            server.register(path, (httpRequest, httpResponse, httpContext) -> {
-                httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-            });
+            prepareResponse("", HttpStatus.SC_BAD_REQUEST);
 
             FindLocationRequest request = new FindLocationRequest("identifier");
             held.findLocation(request, new FindLocationCallback() {
@@ -178,13 +178,26 @@ class HeldIntegrationTest {
     }
 
     private void prepareResponse(String responseContent) {
-        server.register(path, (httpRequest, httpResponse, httpContext) -> {
+        this.responseContent.set(responseContent);
+    }
+
+    private void prepareResponse(String responseContent, int statusCode) {
+        prepareResponse(responseContent);
+        this.responseStatusCode.set(statusCode);
+    }
+
+    private void registerHandler() {
+        serverBootstrap.registerHandler(PATH, (httpRequest, httpResponse, httpContext) -> {
             int statusCode = verifyRequest(httpRequest);
             httpResponse.setStatusCode(statusCode);
 
             if (statusCode == HttpStatus.SC_OK) {
                 ContentType contentType = ContentType.create("application/held+xml", new BasicNameValuePair("charset", "utf-8"));
-                httpResponse.setEntity(new StringEntity(responseContent, contentType));
+                httpResponse.setEntity(new StringEntity(this.responseContent.get(), contentType));
+            }
+
+            if (responseStatusCode.get() != -1) {
+                httpResponse.setStatusCode(responseStatusCode.get());
             }
         });
     }

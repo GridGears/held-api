@@ -21,6 +21,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,7 +55,13 @@ class HeldIntegrationTest extends LocalServerTestBase {
 
     @AfterEach
     void tearDown() throws Exception {
-        super.shutDown();
+        if (this.httpclient != null) {
+            this.httpclient.close();
+        }
+
+        if (this.server != null) {
+            this.server.shutdown(2L, TimeUnit.SECONDS);
+        }
     }
 
     @Test

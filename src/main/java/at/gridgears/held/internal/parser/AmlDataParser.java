@@ -5,15 +5,15 @@ import at.gridgears.held.PositioningMethod;
 import at.gridgears.schemas.held.AmlType;
 import at.gridgears.schemas.held.PositioningMethodType;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
 import static at.gridgears.held.internal.parser.ParseUtils.toInstant;
 
 class AmlDataParser {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LoggerFactory.getLogger(AmlDataParser.class);
 
     AmlData parseAmlData(AmlType amlType) {
         double latitude = amlType.getLatitude();

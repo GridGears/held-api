@@ -16,14 +16,14 @@ import org.apache.http.impl.execchain.RequestAbortedException;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 
 public class HeldClient implements Held {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LoggerFactory.getLogger(HeldClient.class);
 
     private final FindLocationRequestFactory findLocationRequestFactory;
     private final URI uri;

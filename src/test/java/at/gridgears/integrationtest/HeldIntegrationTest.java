@@ -1,6 +1,12 @@
 package at.gridgears.integrationtest;
 
-import at.gridgears.held.*;
+import at.gridgears.held.FindLocationCallback;
+import at.gridgears.held.FindLocationError;
+import at.gridgears.held.FindLocationRequest;
+import at.gridgears.held.FindLocationResult;
+import at.gridgears.held.Held;
+import at.gridgears.held.HeldBuilder;
+import at.gridgears.held.Location;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -11,11 +17,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.localserver.LocalServerTestBase;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.time.Duration;
@@ -26,13 +32,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @SuppressWarnings({"PMD.TooManyStaticImports", "PMD.JUnit4TestShouldUseAfterAnnotation"})
 class HeldIntegrationTest extends LocalServerTestBase {
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOG = LoggerFactory.getLogger(HeldIntegrationTest.class);
     private static final Duration TIMEOUT = Duration.ofSeconds(5L);
     private static final Header AUTHENTICATION_HEADER = new BasicHeader("authentication", "token");
     private Held held;

@@ -196,7 +196,7 @@ class ResponseParserTest {
                 "           xsi:schemaLocation=\"urn:ietf:params:xml:ns:gridgears:aml ../main/xsd/held/GridGears_aml.xsd\">\n" +
                 "           <latitude>-34.407</latitude>\n" +
                 "           <longitude>150.88001</longitude>\n" +
-                "           <radius>12</radius>\n" +
+                "           <radius>12.0</radius>\n" +
                 "           <timestamp>1970-01-01T00:00:10+00:00</timestamp>\n" +
                 "           <confidenceLevel>87</confidenceLevel>\n" +
                 "           <positioningMethod>GNSS</positioningMethod>\n" +
